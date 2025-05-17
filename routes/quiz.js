@@ -12,7 +12,7 @@ const { protect, authorize } = require('../middleware/auth');
 const router = express.Router();
 
 // 🧪 General filtered quiz fetch (e.g. ?subjectID=123&categoryID=abc&approved=true)
-router.get('/filter/:subjectID?/:categoryID?', getQuizzesByFilter);
+router.get('/filter/:subjectID?/:categoryID?', protect, getQuizzesByFilter);
 
 // 🔍 Get all quizzes (unfiltered)
 router.get('/', getQuizzes);

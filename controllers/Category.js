@@ -1,9 +1,9 @@
 const Category = require('../models/Category');
-const Subject = require('../models/Subject');
+const Quiz = require('../models/Quiz');
 
 exports.getCategories = async (req, res, next) => {
     try {
-        const category = await Category.find();
+        const category = await Category.find().populate({path:"subject", select: "name"});
         if(category.length <= 0) return res.status(404).json({ success: false, message: "there is no category"});
         res.status(200).json({ success: true, count: category.length, data: category });
     } 
@@ -15,7 +15,7 @@ exports.getCategories = async (req, res, next) => {
 
 exports.getCategoriesFromSubject = async (req, res) => {
     try {
-        const category = await Category.find({subject: req.params.subjectID});
+        const category = await Category.find({subject: req.params.subjectID}).populate("subject");
         if(category.length <= 0) return res.status(404).json({ success: false, message: "there is no category in this subject"});
         res.status(200).json({ success: true, count: category.length, data: category });
     } 

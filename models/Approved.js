@@ -24,3 +24,4 @@ const ApprovedSchema = new mongoose.Schema({
 ApprovedSchema.index({ admin: 1, quiz: 1 }, { unique: true }); // prevent duplicate approvals
 
 module.exports = mongoose.model('Approved', ApprovedSchema);
+

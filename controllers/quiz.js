@@ -4,7 +4,9 @@ const Category = require('../models/Category');
 
 exports.getQuizzes = async (req, res, next) => {
     try {
-        const quiz = await Quiz.find();
+        const quiz = await Quiz.find()
+            .populate({path: "subject" })
+            .populate({path: "category" });
         res.status(200).json({ success: true, count: quiz.length, data: quiz });
     } 
     catch (error) {

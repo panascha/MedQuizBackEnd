@@ -38,6 +38,9 @@ exports.getScoreByUserID = async (req,res,next) => {
 
 exports.createScore  = async (req, res, next) => {
     try {
+        if(req.body.Score > req.body.FullScore){
+            res.status(500).json({success: false, message: "The score is more than full score" })
+        }
         const score = await Score.create(req.body);
         res.status(201).json({ success: true, data: score });
     } catch (error) {
@@ -48,6 +51,10 @@ exports.createScore  = async (req, res, next) => {
 
 exports.updateScore = async (req, res, next) => {
     try {
+        if(req.body.Score > req.body.FullScore){
+            res.status(500).json({success: false, message: "The score is more than full score" })
+        }
+        
         const score = await Score.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true

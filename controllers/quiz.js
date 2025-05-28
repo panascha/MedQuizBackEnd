@@ -22,7 +22,9 @@ exports.getQuizzesByFilter = async (req, res) => {
     if (req.query.approved !== undefined) filter.approved = req.query.approved === 'true';
 
     try {
-        const quizzes = await Quiz.find(filter);
+        const quizzes = await Quiz.find(filter)            
+            .populate({path: "subject" })
+            .populate({path: "category" });
         if (quizzes.length === 0) {
             return res.status(404).json({ success: false, message: "No quizzes found with specified filter" });
         }
@@ -35,7 +37,9 @@ exports.getQuizzesByFilter = async (req, res) => {
 
 exports.getQuiz = async (req, res, next) => {
     try {
-        const quiz = await Quiz.findById(req.params.id);
+        const quiz = await Quiz.findById(req.params.id)            
+            .populate({path: "subject" })
+            .populate({path: "category" });
         if (!quiz) {
             return res.status(404).json({ success: false });
         }

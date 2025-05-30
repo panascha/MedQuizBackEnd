@@ -3,9 +3,17 @@ const Score = require('../models/Score');
 exports.getScores = async (req, res, next) => {
     try {
         const score = await Score.find()
-            .populate({path: "Subject"})
-            .populate({path: "Category"})
-            .populate('Question.Quiz'); 
+            .populate("Subject")
+            .populate("Category")
+            .populate({
+                path: "Question",
+                populate: {
+                    path: "Quiz",
+                    populate: {
+                        path: "category"
+                    }
+                }
+            });
         res.status(200).json({ success: true, count: score.length, data: score });
     } catch (error) {
         console.error(error);
@@ -16,9 +24,17 @@ exports.getScores = async (req, res, next) => {
 exports.getScore = async (req, res, next) => {
     try {
         const score = await Score.findById(req.params.id)
-            .populate({path: "Subject"})
-            .populate({path: "Category"})
-            .populate('Question.Quiz');
+            .populate("Subject")
+            .populate("Category")
+            .populate({
+                path: "Question",
+                populate: {
+                    path: "Quiz",
+                    populate: {
+                        path: "category"
+                    }
+                }
+            });
 
         if (!score) {
             return res.status(400).json({ success: false });
@@ -34,9 +50,17 @@ exports.getScore = async (req, res, next) => {
 exports.getScoreByUserID = async (req,res,next) => {
     try {
         const score = await Score.find({user:req.params.UserID})
-            .populate({path: "Subject"})
-            .populate({path: "Category"})
-            .populate('Question.Quiz');
+            .populate("Subject")
+            .populate("Category")
+            .populate({
+                path: "Question",
+                populate: {
+                    path: "Quiz",
+                    populate: {
+                        path: "category"
+                    }
+                }
+            });
         if(!score) return res.status(400).json({ success: false })
         res.status(200).json({ success:true, data: score });
     } catch (error) {

@@ -59,13 +59,11 @@ exports.createReport  = async (req, res, next) => {
 
 exports.updateReport = async (req, res, next) => {
     try {
-        const report = await Report.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true
-        });
+
+        const report = await Report.findById({report: req.params.id});
 
         if (!report) {
-            return res.status(400).json({ success: false });
+            return res.status(400).json({ success: false, message: `there is no report id ${req.params.id}`});
         }
 
         res.status(200).json({ success: true, data: report });

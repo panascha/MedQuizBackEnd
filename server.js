@@ -30,7 +30,6 @@ const auth = require('./routes/auth');
 const quiz = require('./routes/quiz');
 const category = require('./routes/category');
 const subject = require('./routes/subject');
-const approved = require('./routes/approved')
 const upload = require('./routes/upload')
 
 //use router
@@ -39,7 +38,6 @@ app.use('/api/v1/auth', auth);
 app.use('/api/v1/quiz', quiz);
 app.use('/api/v1/category', category);
 app.use('/api/v1/subject', subject);
-app.use('/api/v1/approved', approved);
 app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve images
 app.use('/', upload);
 

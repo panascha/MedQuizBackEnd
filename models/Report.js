@@ -6,17 +6,26 @@ const ReportSchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },   
-    quiz:{
+    originalQuiz:{
         type: mongoose.Schema.ObjectId,
         ref: "Quiz",
         required: true
     },
-    type: {
+    suggestedChanges:{
+        type: mongoose.Schema.ObjectId,
+        ref: "Quiz",
+        required: true
+    },
+    status: {
         type: String,
-        enum: ["report", "reply"],
+        enum: ["pending", "approved", "rejected"],
         require: true
     },
-    description:{
+    approvedAdmin: {
+        type: [mongoose.Schema.ObjectId],
+        ref: "User",
+    },
+    reason:{
         type: String,
         require: true
     },

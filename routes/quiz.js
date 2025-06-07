@@ -8,24 +8,30 @@ const {
     deleteQuiz
 } = require('../controllers/quiz');
 const { protect, authorize } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 const router = express.Router();
 
-// 🧪 General filtered quiz fetch (e.g. ?subjectID=123&categoryID=abc&approved=true)
+// GET all quizzes | POST create new quiz with multiple images
+router.route('/')
+    .get(getQuizzes)
+    .post(
+        protect,
+        upload.array('images', 5), // Allow up to 5 images
+        createQuiz
+    );
+
+// GET filtered quizzes
 router.get('/filter/:subjectID?/:categoryID?', protect, getQuizzesByFilter);
 
-// 🔍 Get all quizzes (unfiltered)
-router.get('/', getQuizzes);
-
-// ➕ Create quiz (protected)
-router.post('/', protect, createQuiz);
-
-// 📄 Single quiz operations (get/update/delete)
+// GET by ID | PUT update with multiple images | DELETE
 router.route('/:id')
     .get(getQuiz)
-    .put(protect, updateQuiz)
+    .put(
+        protect,
+        upload.array('images', 3), // Allow up to 5 images
+        updateQuiz
+    )
     .delete(protect, authorize("S-admin", "admin"), deleteQuiz);
-
-
 
 module.exports = router;

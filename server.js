@@ -1,4 +1,3 @@
-
 const express = require('express');
 const { xss } = require('express-xss-sanitizer');
 const mongoSanitize = require('express-mongo-sanitize');
@@ -30,7 +29,8 @@ const auth = require('./routes/auth');
 const quiz = require('./routes/quiz');
 const category = require('./routes/category');
 const subject = require('./routes/subject');
-const upload = require('./routes/upload')
+const upload = require('./routes/upload');
+const report = require('./routes/report');
 
 //use router
 app.use('/api/v1/score', score);
@@ -38,6 +38,7 @@ app.use('/api/v1/auth', auth);
 app.use('/api/v1/quiz', quiz);
 app.use('/api/v1/category', category);
 app.use('/api/v1/subject', subject);
+app.use('/api/v1/report', report);
 app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve images
 app.use('/', upload);
 

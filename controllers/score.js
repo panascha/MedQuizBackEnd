@@ -9,9 +9,10 @@ exports.getScores = async (req, res, next) => {
                 path: "Question",
                 populate: {
                     path: "Quiz",
-                    populate: {
-                        path: "category"
-                    }
+                    populate: [
+                        { path: "category" },
+                        { path: "subject" }
+                    ]
                 }
             });
         res.status(200).json({ success: true, count: score.length, data: score });
@@ -30,9 +31,10 @@ exports.getScore = async (req, res, next) => {
                 path: "Question",
                 populate: {
                     path: "Quiz",
-                    populate: {
-                        path: "category"
-                    }
+                    populate: [
+                        { path: "category" },
+                        { path: "subject" }
+                    ]
                 }
             });
 
@@ -56,9 +58,10 @@ exports.getScoreByUserID = async (req,res,next) => {
                 path: "Question",
                 populate: {
                     path: "Quiz",
-                    populate: {
-                        path: "category"
-                    }
+                    populate: [
+                        { path: "category" },
+                        { path: "subject" }
+                    ]
                 }
             });
         if(!score) return res.status(400).json({ success: false })

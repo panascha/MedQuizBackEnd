@@ -77,21 +77,51 @@ exports.getQuiz = async (req, res, next) => {
 
 exports.createQuiz = async (req, res, next) => {
     try {
-        if(req.user.role !== 'S-admin'){
-            req.body.approved = false;
+        // Extract user ID from the token payload
+        const userId = req.user.id || req.user._id;  // Try both id and _id
+        
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID not found in token"
+            });
         }
-        const subject = Subject.find(req.body.subject);
-        const category = Category.find(req.body.category);
-        if(!subject)
-            return res.status(404).json({success: false, message: "there is no this subject"});
-        if(!category)
-            return res.status(404).json({success: false, message: "there is no this category"});
+
+        // Set the user ID in the request body
+        req.body.user = userId;
+
+        if(req.user.role !== 'S-admin'){
+            req.body.status = "pending";
+        } else {
+            req.body.status = "approved";
+        }
+
+        // Validate subject and category
+        const subject = await Subject.findById(req.body.subject);
+        const category = await Category.findById(req.body.category);
+
+        if(!subject) {
+            return res.status(404).json({
+                success: false, 
+                message: "there is no this subject"
+            });
+        }
+        if(!category) {
+            return res.status(404).json({
+                success: false, 
+                message: "there is no this category"
+            });
+        }
         
         const quiz = await Quiz.create(req.body);
         res.status(201).json({ success: true, data: quiz });
     } catch (error) {
         console.error(error);
-        res.status(400).json({ success: false, error: error.message });
+        res.status(400).json({ 
+            success: false, 
+            error: error.message,
+            details: "Error creating quiz. Please check user authentication and input data."
+        });
     }
 }
 

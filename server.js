@@ -31,6 +31,7 @@ const category = require('./routes/category');
 const subject = require('./routes/subject');
 const upload = require('./routes/upload');
 const report = require('./routes/report');
+const approved = require('./routes/approved');
 
 //use router
 app.use('/api/v1/score', score);
@@ -39,6 +40,7 @@ app.use('/api/v1/quiz', quiz);
 app.use('/api/v1/category', category);
 app.use('/api/v1/subject', subject);
 app.use('/api/v1/report', report);
+app.use('/api/v1/approved', approved);
 app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve images
 app.use('/', upload);
 

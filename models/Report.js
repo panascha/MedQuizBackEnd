@@ -9,21 +9,15 @@ const ReportSchema = new mongoose.Schema({
     originalQuiz:{
         type: mongoose.Schema.ObjectId,
         ref: "Quiz",
-        required: true
     },
     suggestedChanges:{
         type: mongoose.Schema.ObjectId,
         ref: "Quiz",
-        required: true
     },
     status: {
         type: String,
         enum: ["pending", "approved", "rejected"],
-        require: true
-    },
-    approvedAdmin: {
-        type: [mongoose.Schema.ObjectId],
-        ref: "User",
+        default: "pending",
     },
     reason:{
         type: String,
@@ -34,7 +28,5 @@ const ReportSchema = new mongoose.Schema({
         default: Date.now
     }
 });
-
-ApprovedSchema.index({ admin: 1, quiz: 1 }, { unique: true }); // prevent duplicate approvals
 
 module.exports = mongoose.model('Report', ReportSchema);

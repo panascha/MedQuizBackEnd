@@ -21,9 +21,14 @@ const QuizSchema = new mongoose.Schema({
         required: true,
     },
     type:{
-        type:String,
+        type: String,
         enum: ["multi-choice","choice", "written"],
         required: true
+    },
+    status:{
+        type: String,
+        enum: ["pending", "approved", "rejected", "reported"],
+        default: "pending"
     },
     choice:{
         type: [String]
@@ -34,10 +39,6 @@ const QuizSchema = new mongoose.Schema({
     },
     img:{
         type:[String]
-    },
-    approved:{
-        type: Boolean,
-        default: false
     },
     createdAt: {
         type: Date,

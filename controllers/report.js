@@ -1,3 +1,4 @@
+const Quiz = require('../models/Quiz');
 const Report = require('../models/Report');
 
 exports.getReports = async (req, res, next) => {
@@ -59,8 +60,29 @@ exports.getReportByQuizID = async (req,res,next) => {
     }
 }
 
-exports.createReport  = async (req, res, next) => {
+exports.createReport = async (req, res, next) => {
     try {
+        const {originalQuiz: originalQuizID} = req.body;
+        const originalQuiz = await Quiz.findById(originalQuizID);
+        if(!originalQuiz) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "there is no original quiz with this ID"
+            });
+        }
+
+        const {suggestedChanges: suggestedChangesID} = req.body;
+        const suggestedChanges = await Quiz.findById(suggestedChangesID);
+        if(!suggestedChanges) {
+            return res.status(404).json({ 
+                success: false, 
+                message: "there is no suggest quiz with this ID"
+            });
+        }
+
+        await Quiz.findByIdAndUpdate(originalQuizID, { status: "reported" });
+        await Quiz.findByIdAndUpdate(suggestedChangesID, { status: "reported" });
+
         const report = await Report.create(req.body);
         res.status(201).json({ success: true, data: report });
     } catch (error) {

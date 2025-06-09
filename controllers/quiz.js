@@ -19,19 +19,42 @@ exports.getQuizzesByFilter = async (req, res) => {
     const filter = {};
     if (req.params.subjectID) filter.subject = req.params.subjectID;
     if (req.params.categoryID) filter.category = req.params.categoryID;
-    if (req.query.approved !== undefined) filter.approved = req.query.approved === 'true';
+    
+    // Add status filter with validation
+    if (req.query.status) {
+        const validStatuses = ["pending", "approved", "rejected", "reported"];
+        if (!validStatuses.includes(req.query.status)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Invalid status. Must be one of: pending, approved, rejected, reported" 
+            });
+        }
+        filter.status = req.query.status;
+    }
 
     try {
         const quizzes = await Quiz.find(filter)            
             .populate({path: "subject" })
             .populate({path: "category" });
+            
         if (quizzes.length === 0) {
-            return res.status(404).json({ success: false, message: "No quizzes found with specified filter" });
+            return res.status(404).json({ 
+                success: false, 
+                message: "No quizzes found with specified filter" 
+            });
         }
-        res.status(200).json({ success: true, count: quizzes.length, data: quizzes });
+        
+        res.status(200).json({ 
+            success: true, 
+            count: quizzes.length, 
+            data: quizzes 
+        });
     } catch (error) {
         console.error("Error fetching quizzes:", error);
-        res.status(500).json({ success: false, message: "Failed to fetch quizzes" });
+        res.status(500).json({ 
+            success: false, 
+            message: "Failed to fetch quizzes" 
+        });
     }
 };
 

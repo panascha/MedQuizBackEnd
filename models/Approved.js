@@ -14,9 +14,13 @@ const ApprovedSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: "Report"
     },
+    keyword:{
+        type: mongoose.Schema.ObjectId,
+        ref: "Keyword"
+    },
     type: {
         type: String,
-        enum: ['quiz', 'report'],
+        enum: ['quiz', 'report', 'keyword'],
         required: true
     },
     Approved: {
@@ -31,6 +35,7 @@ const ApprovedSchema = new mongoose.Schema({
 
 ApprovedSchema.index({ admin: 1, quiz: 1, type: 'quiz' }, { unique: true, sparse: true });
 ApprovedSchema.index({ admin: 1, report: 1, type: 'report' }, { unique: true, sparse: true });
+ApprovedSchema.index({ admin: 1, keyword: 1, type: 'keyword' }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Approved', ApprovedSchema);
 

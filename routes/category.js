@@ -1,5 +1,5 @@
 const express = require('express');
-const { getCategories,getCategoriesFromSubject, getCategory, createCategory, updateCategory, deleteCategory} = require('../controllers/Category')
+const { getCategories,getCategoriesBySubject, getCategory, createCategory, updateCategory, deleteCategory} = require('../controllers/category');
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -14,6 +14,6 @@ router.route('/:id')
     .delete(protect, authorize('admin','S-admin'), deleteCategory);
 
 router.route('/subject/:subjectID')
-    .get(protect, getCategoriesFromSubject)
+    .get(protect, getCategoriesBySubject)
 
 module.exports = router;

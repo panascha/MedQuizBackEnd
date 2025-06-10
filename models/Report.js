@@ -14,6 +14,18 @@ const ReportSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: "Quiz",
     },
+    originalKeyword:{
+        type: mongoose.Schema.ObjectId,
+        ref: "Keyword",
+    },
+    suggestedChangesKeyword:{
+        type: mongoose.Schema.ObjectId,
+        ref: "Keyword",
+    },
+    type:{
+        type: String,
+        enum: ["quiz", "keyword"]
+    },
     status: {
         type: String,
         enum: ["pending", "approved", "rejected"],

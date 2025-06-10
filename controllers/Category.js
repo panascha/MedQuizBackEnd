@@ -1,5 +1,4 @@
 const Category = require('../models/Category');
-const Quiz = require('../models/Quiz');
 
 exports.getCategories = async (req, res, next) => {
     try {
@@ -13,7 +12,7 @@ exports.getCategories = async (req, res, next) => {
     }
 }
 
-exports.getCategoriesFromSubject = async (req, res) => {
+exports.getCategoriesBySubject = async (req, res) => {
     try {
         const category = await Category.find({subject: req.params.subjectID}).populate("subject");
         if(category.length <= 0) return res.status(404).json({ success: false, message: "there is no category in this subject"});

@@ -6,6 +6,7 @@ const {
   updateApproved,
   deleteApproved,
   approvedQuiz,
+  approvedKeyword,
   approvedReport,
 } = require('../controllers/approved');
 const { protect, authorize } = require('../middleware/auth');
@@ -47,6 +48,12 @@ router.route('/report/:reportID')
     protect,
     authorize('admin', 'S-admin'),
     approvedReport
+  );
+router.route('/keyword/:keywordID')
+  .post(
+    protect,
+    authorize('admin', 'S-admin'),
+    approvedKeyword
   );
 
 module.exports = router; 

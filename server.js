@@ -6,13 +6,19 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const cors = require('cors');
 const path = require('path');
-
+const fs = require('fs');
 
 const app = express();
 
 const connectDB = require('./config/db');
 
 connectDB();
+
+// Create public folder if it doesn't exist
+const publicDir = path.join(__dirname, 'public');
+if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+}
 
 app.use(cors());
 
@@ -32,6 +38,7 @@ const subject = require('./routes/subject');
 const upload = require('./routes/upload');
 const report = require('./routes/report');
 const approved = require('./routes/approved');
+const keyword = require('./routes/keyword');
 
 //use router
 app.use('/api/v1/score', score);
@@ -41,6 +48,7 @@ app.use('/api/v1/category', category);
 app.use('/api/v1/subject', subject);
 app.use('/api/v1/report', report);
 app.use('/api/v1/approved', approved);
+app.use('/api/v1/keyword', keyword);
 app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve images
 app.use('/', upload);
 

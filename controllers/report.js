@@ -1,11 +1,14 @@
 const Quiz = require('../models/Quiz');
+const Keyword = require('../models/Keyword');
 const Report = require('../models/Report');
 
 exports.getReports = async (req, res, next) => {
     try {
         const report = await Report.find()
             .populate({path: "originalQuiz"})
-            .populate({path: "suggestedChanges"});
+            .populate({path: "suggestedChanges"})
+            .populate({path: "originalKeyword"})
+            .populate({path: "suggestedChangesKeyword"});
         res.status(200).json({ success: true, count: report.length, data: report });
     } catch (error) {
         console.error(error);
@@ -21,7 +24,9 @@ exports.getReport = async (req, res, next) => {
     try {
         const report = await Report.findById(reportID)
             .populate({path: "originalQuiz"})
-            .populate({path: "suggestedChanges"});
+            .populate({path: "suggestedChanges"})
+            .populate({path: "originalKeyword"})
+            .populate({path: "suggestedChangesKeyword"});
 
         if (!report) {
             return res.status(400).json({ success: false });
@@ -36,9 +41,11 @@ exports.getReport = async (req, res, next) => {
 
 exports.getReportByUserID = async (req,res,next) => {
     try {
-        const report = await Report.find({user:req.params.UserID})
+        const report = await Report.find({User: req.params.UserID})
             .populate({path: "originalQuiz"})
-            .populate({path: "suggestedChanges"});
+            .populate({path: "suggestedChanges"})
+            .populate({path: "originalKeyword"})
+            .populate({path: "suggestedChangesKeyword"});
         if(!report) return res.status(400).json({ success: false })
         res.status(200).json({ success:true, data: report });
     } catch (error) {
@@ -47,11 +54,22 @@ exports.getReportByUserID = async (req,res,next) => {
     }
 }
 
-exports.getReportByQuizID = async (req,res,next) => {
+exports.getReportByType = async (req, res, next) => {
     try {
-        const report = await Report.find({user:req.params.quizID})
+        const { type } = req.params;
+        if (!['quiz', 'keyword'].includes(type)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Invalid report type. Must be 'quiz' or 'keyword'" 
+            });
+        }
+
+        const report = await Report.find({ type })
             .populate({path: "originalQuiz"})
-            .populate({path: "suggestedChanges"});
+            .populate({path: "suggestedChanges"})
+            .populate({path: "originalKeyword"})
+            .populate({path: "suggestedChangesKeyword"});
+            
         if(!report) return res.status(400).json({ success: false })
         res.status(200).json({ success:true, data: report });
     } catch (error) {
@@ -62,45 +80,86 @@ exports.getReportByQuizID = async (req,res,next) => {
 
 exports.createReport = async (req, res, next) => {
     try {
-        const {originalQuiz: originalQuizID} = req.body;
-        const originalQuiz = await Quiz.findById(originalQuizID);
-        if(!originalQuiz) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "there is no original quiz with this ID"
+        const { type, originalQuiz, suggestedChanges, originalKeyword, suggestedChangesKeyword } = req.body;
+
+        if (!type || !['quiz', 'keyword'].includes(type)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid report type. Must be 'quiz' or 'keyword'"
             });
         }
 
-        const {suggestedChanges: suggestedChangesID} = req.body;
-        const suggestedChanges = await Quiz.findById(suggestedChangesID);
-        if(!suggestedChanges) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "there is no suggest quiz with this ID"
-            });
-        }
+        if (type === 'quiz') {
+            // Validate quiz report
+            if (!originalQuiz || !suggestedChanges) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Both originalQuiz and suggestedChanges are required for quiz reports"
+                });
+            }
 
-        await Quiz.findByIdAndUpdate(originalQuizID, { status: "reported" });
-        await Quiz.findByIdAndUpdate(suggestedChangesID, { status: "reported" });
+            const originalQuizDoc = await Quiz.findById(originalQuiz);
+            const suggestedChangesDoc = await Quiz.findById(suggestedChanges);
+
+            if (!originalQuizDoc || !suggestedChangesDoc) {
+                return res.status(404).json({
+                    success: false,
+                    message: "One or both quizzes not found"
+                });
+            }
+
+            // Update quiz statuses
+            await Quiz.findByIdAndUpdate(originalQuiz, { status: "reported" });
+            await Quiz.findByIdAndUpdate(suggestedChanges, { status: "reported" });
+
+        } else if (type === 'keyword') {
+            // Validate keyword report
+            if (!originalKeyword || !suggestedChangesKeyword) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Both originalKeyword and suggestedChangesKeyword are required for keyword reports"
+                });
+            }
+
+            const originalKeywordDoc = await Keyword.findById(originalKeyword);
+            const suggestedChangesKeywordDoc = await Keyword.findById(suggestedChangesKeyword);
+
+            if (!originalKeywordDoc || !suggestedChangesKeywordDoc) {
+                return res.status(404).json({
+                    success: false,
+                    message: "One or both keywords not found"
+                });
+            }
+            await Keyword.findByIdAndUpdate(originalKeyword, { status: "reported" });
+            await Keyword.findByIdAndUpdate(suggestedChangesKeyword, { status: "reported" });
+        }
 
         const report = await Report.create(req.body);
         res.status(201).json({ success: true, data: report });
     } catch (error) {
         console.error(error);
-        res.status(400).json({ success: false });
+        res.status(400).json({ success: false, error: error.message });
     }
 }
 
 exports.updateReport = async (req, res, next) => {
     try {
-
-        const report = await Report.findById({report: req.params.id});
+        const report = await Report.findById(req.params.id);
 
         if (!report) {
-            return res.status(400).json({ success: false, message: `there is no report id ${req.params.id}`});
+            return res.status(400).json({ 
+                success: false, 
+                message: `there is no report id ${req.params.id}`
+            });
         }
 
-        res.status(200).json({ success: true, data: report });
+        const updatedReport = await Report.findByIdAndUpdate(
+            req.params.id,
+            req.body,
+            { new: true, runValidators: true }
+        );
+
+        res.status(200).json({ success: true, data: updatedReport });
     } catch (error) {
         console.error(error);
         res.status(400).json({ success: false });

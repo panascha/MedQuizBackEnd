@@ -2,7 +2,7 @@ const express = require('express');
 const {
   getKeywords,
   getKeyword,
-  getKeywordBySubject,
+  getKeywordOnlyApproved,
   createKeyword,
   updateKeyword,
   deleteKeyword
@@ -21,8 +21,8 @@ router.route('/')
   );
 
 // GET keywords by subject
-router.route('/subject/:subjectID')
-  .get(protect, authorize('user', 'S-admin', 'admin'), getKeywordBySubject);
+router.route('/approved')
+  .get(protect, authorize('user', 'S-admin', 'admin'), getKeywordOnlyApproved);
 
 // GET by ID | PUT update | DELETE
 router.route('/:id')

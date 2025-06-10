@@ -14,12 +14,12 @@ exports.getKeywords = async (req, res, next) => {
     }
 }
 
-exports.getKeywordBySubject = async (req, res) => {
+exports.getKeywordOnlyApproved = async (req, res) => {
     try {
-        const keyword = await Keyword.find({subject: req.params.subjectID})
+        const keyword = await Keyword.find({status: "approved"})
             .populate("subject")
             .populate("category");
-        if(keyword.length <= 0) return res.status(404).json({ success: false, message: "there is no keyword in this subject"});
+        if(keyword.length <= 0) return res.status(404).json({ success: false, message: "there is no keyword in this subject that approved"});
         res.status(200).json({ success: true, count: keyword.length, data: keyword });
     } 
     catch (error) {

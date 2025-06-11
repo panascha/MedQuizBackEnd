@@ -112,6 +112,13 @@ exports.createQuiz = async (req, res, next) => {
                 message: "there is no this category"
             });
         }
+
+        // Handle multiple images
+        if (req.files && req.files.length > 0) {
+            req.body.img = req.files.map(file => `/public/${file.filename}`);
+        } else {
+            req.body.img = [];
+        }
         
         const quiz = await Quiz.create(req.body);
         res.status(201).json({ success: true, data: quiz });
@@ -136,6 +143,11 @@ exports.updateQuiz = async (req, res) => {
         const isSAdmin = req.user.role === "S-admin";
         if (!isSAdmin) {
             req.body.approved = false;
+        }
+
+        // Handle multiple images
+        if (req.files && req.files.length > 0) {
+            req.body.img = req.files.map(file => `/public/${file.filename}`);
         }
 
         const updatedQuiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, {

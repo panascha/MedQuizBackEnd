@@ -31,9 +31,9 @@ router.route('/:id')
     .put(
         protect,
         authorize('user', 'S-admin', 'admin'),
-        upload.array('images', 3), // Allow up to 5 images
+        upload.array('images', 5), // Allow up to 5 images
         updateQuiz
     )
-    .delete(protect, authorize( 'S-admin', 'admin' ), deleteQuiz);
+    .delete(protect, authorize('S-admin', 'admin'), deleteQuiz);
 
 module.exports = router;

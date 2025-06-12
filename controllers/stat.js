@@ -5,16 +5,16 @@ const User = require('../models/User');
 
 exports.getStatOverAll = async (req,res) => {
     try{
-        // Get total counts
-        const QuizCount = await Quiz.countDocuments();
-        const ReportCount = await Report.countDocuments();
-        const KeywordCount = await Keyword.countDocuments();
-        const UserCount = await User.countDocuments();
-
-        // Get pending counts
-        const pendingQuizzes = await Quiz.countDocuments({ status: 'pending' });
-        const pendingKeywords = await Keyword.countDocuments({ status: 'pending' });
-        const pendingReports = await Report.countDocuments({ status: 'pending' });
+        // Get total counts and pending counts in parallel
+        const [QuizCount, ReportCount, KeywordCount, UserCount, pendingQuizzes, pendingKeywords, pendingReports] = await Promise.all([
+            Quiz.countDocuments(),
+            Report.countDocuments(),
+            Keyword.countDocuments(),
+            User.countDocuments(),
+            Quiz.countDocuments({ status: 'pending' }),
+            Keyword.countDocuments({ status: 'pending' }),
+            Report.countDocuments({ status: 'pending' })
+        ]);
 
         // Return all statistics
         res.status(200).json({
@@ -32,6 +32,6 @@ exports.getStatOverAll = async (req,res) => {
         
     } catch(err){
         console.error(err);
-        res.status(400).json({ success: false, message: err.message});
+        res.status(400).json({ success: false, message: 'Error fetching statistics'});    
     }
 }

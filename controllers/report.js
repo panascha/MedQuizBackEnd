@@ -14,10 +14,34 @@ exports.getReports = async (req, res, next) => {
         }
 
         const report = await Report.find(query)
-            .populate({path: "originalQuiz"})
-            .populate({path: "suggestedChanges"})
-            .populate({path: "originalKeyword"})
-            .populate({path: "suggestedChangesKeyword"})
+            .populate({
+                path: "originalQuiz",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "suggestedChanges",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "originalKeyword",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "suggestedChangesKeyword",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
             .populate({path: "User", select: "name"});
 
         res.status(200).json({ success: true, count: report.length, data: report });
@@ -34,10 +58,34 @@ exports.getReport = async (req, res, next) => {
     }
     try {
         const report = await Report.findById(reportID)
-            .populate({path: "originalQuiz"})
-            .populate({path: "suggestedChanges"})
-            .populate({path: "originalKeyword"})
-            .populate({path: "suggestedChangesKeyword"});
+            .populate({
+                path: "originalQuiz",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "suggestedChanges",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "originalKeyword",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "suggestedChangesKeyword",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            });
 
         if (!report) {
             return res.status(400).json({ success: false });
@@ -53,10 +101,34 @@ exports.getReport = async (req, res, next) => {
 exports.getReportByUserID = async (req,res,next) => {
     try {
         const report = await Report.find({User: req.params.UserID})
-            .populate({path: "originalQuiz"})
-            .populate({path: "suggestedChanges"})
-            .populate({path: "originalKeyword"})
-            .populate({path: "suggestedChangesKeyword"});
+            .populate({
+                path: "originalQuiz",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "suggestedChanges",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "originalKeyword",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            })
+            .populate({
+                path: "suggestedChangesKeyword",
+                populate: [
+                    { path: "subject" },
+                    { path: "category" }
+                ]
+            });
         if(!report) return res.status(400).json({ success: false })
         res.status(200).json({ success:true, data: report });
     } catch (error) {

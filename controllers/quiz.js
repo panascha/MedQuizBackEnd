@@ -5,6 +5,7 @@ const Category = require('../models/Category');
 exports.getQuizzes = async (req, res, next) => {
     try {
         const quiz = await Quiz.find()
+            .populate({path: "user"})
             .populate({path: "subject" })
             .populate({path: "category" });
         res.status(200).json({ success: true, count: quiz.length, data: quiz });
@@ -33,17 +34,11 @@ exports.getQuizzesByFilter = async (req, res) => {
     }
 
     try {
-        const quizzes = await Quiz.find(filter)            
+        const quizzes = await Quiz.find(filter)
+            .populate({path: "user"})            
             .populate({path: "subject" })
             .populate({path: "category" });
             
-        if (quizzes.length === 0) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "No quizzes found with specified filter" 
-            });
-        }
-        
         res.status(200).json({ 
             success: true, 
             count: quizzes.length, 

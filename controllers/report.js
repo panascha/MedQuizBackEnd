@@ -4,15 +4,26 @@ const Report = require('../models/Report');
 
 exports.getReports = async (req, res, next) => {
     try {
-        const report = await Report.find()
+        // Get status from query parameters
+        const { status } = req.query;
+        
+        // Build query object
+        const query = {};
+        if (status) {
+            query.status = status;
+        }
+
+        const report = await Report.find(query)
             .populate({path: "originalQuiz"})
             .populate({path: "suggestedChanges"})
             .populate({path: "originalKeyword"})
-            .populate({path: "suggestedChangesKeyword"});
+            .populate({path: "suggestedChangesKeyword"})
+            .populate({path: "User", select: "name"});
+
         res.status(200).json({ success: true, count: report.length, data: report });
     } catch (error) {
         console.error(error);
-        res.status(400).json({ success: false });
+        res.status(400).json({ success: false, error: error.message });
     }
 }
 

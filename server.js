@@ -39,6 +39,7 @@ const upload = require('./routes/upload');
 const report = require('./routes/report');
 const approved = require('./routes/approved');
 const keyword = require('./routes/keyword');
+const stat = require('./routes/stat');
 
 //use router
 app.use('/api/v1/score', score);
@@ -49,6 +50,7 @@ app.use('/api/v1/subject', subject);
 app.use('/api/v1/report', report);
 app.use('/api/v1/approved', approved);
 app.use('/api/v1/keyword', keyword);
+app.use('/api/v1/stat', stat);
 app.use('/public', express.static(path.join(__dirname, 'public'))); // Serve images
 app.use('/', upload);
 

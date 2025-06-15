@@ -2,10 +2,20 @@ const Keyword = require('../models/Keyword');
 
 exports.getKeywords = async (req, res, next) => {
     try {
-        const keyword = await Keyword.find()
+        // Get status from query parameters
+        const { status } = req.query;
+        
+        // Build query object
+        const query = {};
+        if (status) {
+            query.status = status;
+        }
+
+        const keyword = await Keyword.find(query)
             .populate("subject")
-            .populate("category");
-        if(keyword.length <= 0) return res.status(404).json({ success: false, message: "there is no keyword"});
+            .populate("category")
+            .populate("user");
+            
         res.status(200).json({ success: true, count: keyword.length, data: keyword });
     } 
     catch (error) {
@@ -19,7 +29,6 @@ exports.getKeywordOnlyApproved = async (req, res) => {
         const keyword = await Keyword.find({status: "approved"})
             .populate("subject")
             .populate("category");
-        if(keyword.length <= 0) return res.status(404).json({ success: false, message: "there is no keyword in this subject that approved"});
         res.status(200).json({ success: true, count: keyword.length, data: keyword });
     } 
     catch (error) {

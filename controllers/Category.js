@@ -40,7 +40,7 @@ exports.getCategory= async (req, res, next) => {
 exports.createCategory = async (req, res, next) => {
     try {
         if(req.user.role !== 'S-admin'){
-            res.status(500),json({ success: false, message: "you have no permission to create Category"});
+            res.status(500).json({ success: false, message: "you have no permission to create Category"});
         }
 
         const category = await Category.create(req.body);

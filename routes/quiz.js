@@ -8,7 +8,7 @@ const {
     deleteQuiz
 } = require('../controllers/quiz');
 const { protect, authorize } = require('../middleware/auth');
-const upload = require('../middleware/upload');
+const { quizUpload, handleUploadError } = require('../middleware/upload');
 
 const router = express.Router();
 
@@ -18,7 +18,8 @@ router.route('/')
     .post(
         protect,
         authorize('user', 'S-admin', 'admin'),
-        upload.array('images', 5), // Allow up to 5 images
+        quizUpload.array('images', 5), // Allow up to 5 images
+        handleUploadError,
         createQuiz
     );
 
@@ -31,7 +32,8 @@ router.route('/:id')
     .put(
         protect,
         authorize('user', 'S-admin', 'admin'),
-        upload.array('images', 5), // Allow up to 5 images
+        quizUpload.array('images', 5), // Allow up to 5 images
+        handleUploadError,
         updateQuiz
     )
     .delete(protect, authorize('S-admin', 'admin'), deleteQuiz);

@@ -122,11 +122,12 @@ exports.approvedQuiz = async (req, res) => {
           });
         }
         else {
-          await Quiz.findByIdAndDelete(quizID);
+          const updatedQuiz = await Quiz.findByIdAndUpdate(quizID, { status: "rejected" }, { new: true });
           await Approved.deleteMany({ quiz: quizID, type: 'quiz' });
           return res.status(200).json({
             success: true,
-            message: "Quiz denied directly by S-admin"
+            message: "Quiz rejected directly by S-admin",
+            data: updatedQuiz
           });
         }
       }
@@ -153,11 +154,12 @@ exports.approvedQuiz = async (req, res) => {
       }
   
       if (denials >= 2) {
-        await Quiz.findByIdAndDelete(quizID);
+        const updatedQuiz = await Quiz.findByIdAndUpdate(quizID, { status: "rejected" }, { new: true });
         await Approved.deleteMany({ quiz: quizID, type: 'quiz' });
         return res.status(200).json({
           success: true,
-          message: "Quiz denied and deleted by 2 admins"
+          message: "Quiz rejected by 2 admins",
+          data: updatedQuiz
         });
       }
   
@@ -212,11 +214,12 @@ exports.approvedKeyword = async (req, res) => {
           });
         }
         else {
-          await keyword.findByIdAndDelete(keywordID);
+          const updatedKeyword = await Keyword.findByIdAndUpdate(keywordID, { status: "rejected" }, { new: true });
           await Approved.deleteMany({ keyword: keywordID, type: 'keyword' });
           return res.status(200).json({
             success: true,
-            message: "keyword denied directly by S-admin"
+            message: "Keyword rejected directly by S-admin",
+            data: updatedKeyword
           });
         }
       }
@@ -243,11 +246,12 @@ exports.approvedKeyword = async (req, res) => {
       }
   
       if (denials >= 2) {
-        await Keyword.findByIdAndDelete(keywordID);
+        const updatedKeyword = await Keyword.findByIdAndUpdate(keywordID, { status: "rejected" }, { new: true });
         await Approved.deleteMany({ keyword: keywordID, type: 'keyword' });
         return res.status(200).json({
           success: true,
-          message: "Keyword denied and deleted by 2 admins"
+          message: "Keyword rejected by 2 admins",
+          data: updatedKeyword
         });
       }
   
@@ -306,19 +310,11 @@ exports.approvedReport = async (req, res) => {
               { status: "approved" }
             );
             // Update original quiz status to rejected
-            await Quiz.findByIdAndUpdate(
-              report.originalQuiz._id,
-              { status: "rejected" }
-            );
           } else {
             // Keep original quiz and reject suggested changes
             await Quiz.findByIdAndUpdate(
               report.originalQuiz._id,
               { status: "approved" }
-            );
-            await Quiz.findByIdAndUpdate(
-              report.suggestedChanges._id,
-              { status: "rejected" }
             );
           }
         } else if (report.type === 'keyword') {
@@ -329,19 +325,11 @@ exports.approvedReport = async (req, res) => {
               { status: "approved" }
             );
             // Update original keyword status to rejected
-            await Keyword.findByIdAndUpdate(
-              report.originalKeyword._id,
-              { status: "rejected" }
-            );
           } else {
             // Keep original keyword and reject suggested changes
             await Keyword.findByIdAndUpdate(
               report.originalKeyword._id,
               { status: "approved" }
-            );
-            await Keyword.findByIdAndUpdate(
-              report.suggestedChangesKeyword._id,
-              { status: "rejected" }
             );
           }
         }
@@ -383,10 +371,6 @@ exports.approvedReport = async (req, res) => {
             { status: "approved" }
           );
           // Update original quiz status to rejected
-          await Quiz.findByIdAndUpdate(
-            report.originalQuiz._id,
-            { status: "rejected" }
-          );
         } else if (report.type === 'keyword') {
           // Update suggested keyword status
           await Keyword.findByIdAndUpdate(
@@ -394,10 +378,6 @@ exports.approvedReport = async (req, res) => {
             { status: "approved" }
           );
           // Update original keyword status to rejected
-          await Keyword.findByIdAndUpdate(
-            report.originalKeyword._id,
-            { status: "rejected" }
-          );
         }
 
         // Update report status
@@ -425,19 +405,11 @@ exports.approvedReport = async (req, res) => {
             report.originalQuiz._id,
             { status: "approved" }
           );
-          await Quiz.findByIdAndUpdate(
-            report.suggestedChanges._id,
-            { status: "rejected" }
-          );
         } else if (report.type === 'keyword') {
           // Keep original keyword and reject suggested changes
           await Keyword.findByIdAndUpdate(
             report.originalKeyword._id,
             { status: "approved" }
-          );
-          await Keyword.findByIdAndUpdate(
-            report.suggestedChangesKeyword._id,
-            { status: "rejected" }
           );
         }
         

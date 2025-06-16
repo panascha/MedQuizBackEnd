@@ -83,24 +83,24 @@ const handleUploadError = (err, req, res, next) => {
         if (err.code === 'LIMIT_FILE_SIZE') {
             return res.status(400).json({
                 success: false,
-                error: 'File size too large. Maximum size is 5MB'
+                message: 'File size too large. Maximum size is 5MB'
             });
         }
         if (err.code === 'LIMIT_FILE_COUNT') {
             return res.status(400).json({
                 success: false,
-                error: 'Too many files. Maximum is 5 files for quizzes, 1 for subjects'
+                message: 'Too many files. Maximum is 5 files for quizzes, 1 for subjects'
             });
         }
         return res.status(400).json({
             success: false,
-            error: err.message
+            message: err.message
         });
     }
     if (err) {
         return res.status(400).json({
             success: false,
-            error: err.message
+            message: err.message
         });
     }
     next();

@@ -79,7 +79,7 @@ exports.createSubject = async (req, res, next) => {
       };
   
       if (req.file) {
-        updateData.img = `/public/${req.file.filename}`;
+        updateData.img = `/public/subjects/${req.file.filename}`;
       }
   
       const subject = await Subject.findByIdAndUpdate(req.params.id, updateData, {

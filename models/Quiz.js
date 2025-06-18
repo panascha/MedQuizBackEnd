@@ -26,7 +26,7 @@ const QuizSchema = new mongoose.Schema({
     type: {
         type: String,
         enum: {
-            values: ["multi-choice", "choice", "written"],
+            values: ["both", "choice", "written"],
             message: '{VALUE} is not a valid question type'
         },
         required: [true, 'Question type is required']

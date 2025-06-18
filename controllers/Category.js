@@ -3,7 +3,6 @@ const Category = require('../models/Category');
 exports.getCategories = async (req, res, next) => {
     try {
         const category = await Category.find().populate({path:"subject", select: "name"});
-        if(category.length <= 0) return res.status(404).json({ success: false, message: "there is no category"});
         res.status(200).json({ success: true, count: category.length, data: category });
     } 
     catch (error) {
@@ -15,7 +14,6 @@ exports.getCategories = async (req, res, next) => {
 exports.getCategoriesBySubject = async (req, res) => {
     try {
         const category = await Category.find({subject: req.params.subjectID}).populate("subject");
-        if(category.length <= 0) return res.status(404).json({ success: false, message: "there is no category in this subject"});
         res.status(200).json({ success: true, count: category.length, data: category });
     } 
     catch (error) {
@@ -28,7 +26,6 @@ exports.getCategory= async (req, res, next) => {
     try {
         const category = await Category.findById(req.params.id);
         if (!category) return res.status(404).json({ success: false, message: "there is no ID of this category" });
-
         res.status(200).json({ success: true, data: category });
     } 
     catch (error) {

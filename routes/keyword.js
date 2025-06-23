@@ -5,7 +5,8 @@ const {
   getKeywordOnlyApproved,
   createKeyword,
   updateKeyword,
-  deleteKeyword
+  deleteKeyword,
+  getKeywordByCategoryID,
 } = require('../controllers/keyword');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -37,5 +38,8 @@ router.route('/:id')
     authorize('S-admin'),
     deleteKeyword
   );
+
+router.route('/cate/:cateId')
+  .get(protect, authorize('user', 'S-admin', 'admin'), getKeywordByCategoryID);
 
 module.exports = router; 

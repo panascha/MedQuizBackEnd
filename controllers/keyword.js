@@ -37,6 +37,20 @@ exports.getKeywordOnlyApproved = async (req, res) => {
     }
 }
 
+exports.getKeywordByCategoryID = async (req, res) => {
+    try {
+        const keyword = await Keyword.find({category: req.params.cateId});
+        if(!keyword){
+            return res.status(200).json({ success: true, data: {}});
+        }
+        res.status(200).json({ success: true, count: keyword.length, data: keyword });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(400).json({ success: false, error: error.message });
+    }
+}
+
 exports.getKeyword = async (req, res, next) => {
     try {
         const keyword = await Keyword.findById(req.params.id)

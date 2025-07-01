@@ -6,7 +6,6 @@ const subjectSchema = new Schema({
     type: String,
     required: [true, 'Subject name is required'],
     trim: true,
-    unique: true,
     minlength: [2, 'Subject name must be at least 2 characters'],
     maxlength: [100, 'Subject name cannot be more than 100 characters']
   },

@@ -257,6 +257,12 @@ exports.deleteReport = async (req, res, next) => {
             return res.status(400).json({ success: false });
         }
 
+        if (report.status === 'approved' && report.originalQuiz) {
+            await Quiz.findByIdAndDelete(report.originalQuiz);
+        } else if (report.status === 'rejected' && report.suggestedChanges) {
+            await Quiz.findByIdAndDelete(report.suggestedChanges);
+        }
+
         res.status(200).json({ success: true, data: {} });
     } catch (error) {
         console.error(error);

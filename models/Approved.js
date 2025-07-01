@@ -26,12 +26,8 @@ const ApprovedSchema = new mongoose.Schema({
     Approved: {
         type: Boolean,
         require: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
     }
-});
+}, { timestamps: true });
 
 ApprovedSchema.index({ admin: 1, quiz: 1, type: 'quiz' }, { unique: true, sparse: true });
 ApprovedSchema.index({ admin: 1, report: 1, type: 'report' }, { unique: true, sparse: true });

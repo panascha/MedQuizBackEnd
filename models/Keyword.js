@@ -28,11 +28,7 @@ const KeywordSchema = new mongoose.Schema({
         type: String,
         enum: ["pending", "approved", "rejected", "reported"],
         default: "pending"
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
     }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Keyword', KeywordSchema);

@@ -272,7 +272,7 @@ exports.approvedReport = async (req, res) => {
     try {
       const { role, id: adminID } = req.user;
       const { reportID } = req.params;
-      const { Approved: isApproved } = req.body; // Boolean: true = approve, false = deny
+      const { Approved: isApproved, reason: reason } = req.body; 
   
       if (!['admin', 'S-admin'].includes(role)) {
         return res.status(403).json({ success: false, message: "You have no permission to approve or deny reports" });
@@ -299,34 +299,26 @@ exports.approvedReport = async (req, res) => {
       if (report.status !== 'pending') {
         return res.status(400).json({ success: false, message: "This report has already been processed" });
       }
-  
-      // S-admin can approve directly
       if (role === 'S-admin') {
         if (report.type === 'quiz') {
           if (isApproved) {
-            // Update suggested quiz status
             await Quiz.findByIdAndUpdate(
               report.suggestedChanges._id,
               { status: "approved" }
             );
-            // Update original quiz status to rejected
           } else {
-            // Keep original quiz and reject suggested changes
             await Quiz.findByIdAndUpdate(
               report.originalQuiz._id,
-              { status: "approved" }
+              { status: "approved"}
             );
           }
         } else if (report.type === 'keyword') {
           if (isApproved) {
-            // Update suggested keyword status
             await Keyword.findByIdAndUpdate(
               report.suggestedChangesKeyword._id,
               { status: "approved" }
             );
-            // Update original keyword status to rejected
           } else {
-            // Keep original keyword and reject suggested changes
             await Keyword.findByIdAndUpdate(
               report.originalKeyword._id,
               { status: "approved" }
@@ -334,10 +326,9 @@ exports.approvedReport = async (req, res) => {
           }
         }
 
-        // Update report status
         const updatedReport = await Report.findByIdAndUpdate(
           reportID,
-          { status: isApproved ? 'approved' : 'rejected' },
+          { status: isApproved ? 'approved' : 'rejected', reason: reason },
           { new: true }
         ).populate('originalQuiz')
          .populate('suggestedChanges')
@@ -352,38 +343,30 @@ exports.approvedReport = async (req, res) => {
         });
       }
   
-      // Save admin approval/denial
       await Approved.findOneAndUpdate(
         { admin: adminID, report: reportID, type: 'report' },
         { Approved: isApproved },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
   
-      // Count approvals and denials
       const approvals = await Approved.countDocuments({ report: reportID, type: 'report', Approved: true });
       const denials = await Approved.countDocuments({ report: reportID, type: 'report', Approved: false });
   
       if (approvals >= 2) {
         if (report.type === 'quiz') {
-          // Update suggested quiz status
           await Quiz.findByIdAndUpdate(
             report.suggestedChanges._id,
             { status: "approved" }
           );
-          // Update original quiz status to rejected
         } else if (report.type === 'keyword') {
-          // Update suggested keyword status
           await Keyword.findByIdAndUpdate(
             report.suggestedChangesKeyword._id,
             { status: "approved" }
           );
-          // Update original keyword status to rejected
         }
-
-        // Update report status
         const updatedReport = await Report.findByIdAndUpdate(
           reportID,
-          { status: 'approved' },
+          { status: 'approved', reason: reason },
           { new: true }
         ).populate('originalQuiz')
          .populate('suggestedChanges')
@@ -400,23 +383,19 @@ exports.approvedReport = async (req, res) => {
   
       if (denials >= 2) {
         if (report.type === 'quiz') {
-          // Keep original quiz and reject suggested changes
           await Quiz.findByIdAndUpdate(
             report.originalQuiz._id,
             { status: "approved" }
           );
         } else if (report.type === 'keyword') {
-          // Keep original keyword and reject suggested changes
           await Keyword.findByIdAndUpdate(
             report.originalKeyword._id,
             { status: "approved" }
           );
         }
-        
-        // Update report status
         const updatedReport = await Report.findByIdAndUpdate(
           reportID,
-          { status: 'rejected' },
+          { status: 'rejected', reason: reason },
           { new: true }
         ).populate('originalQuiz')
          .populate('suggestedChanges')

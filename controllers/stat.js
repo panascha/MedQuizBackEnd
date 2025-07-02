@@ -3,9 +3,8 @@ const Report = require('../models/Report');
 const Keyword = require('../models/Keyword');
 const User = require('../models/User');
 
-exports.getStatOverAll = async (req,res) => {
+exports.getStatOverAll = async (req, res) => {
     try{
-        // Get total counts and pending counts in parallel
         const [QuizCount, ReportCount, KeywordCount, UserCount, pendingQuizzes, pendingKeywords, pendingReports] = await Promise.all([
             Quiz.countDocuments(),
             Report.countDocuments(),
@@ -16,7 +15,6 @@ exports.getStatOverAll = async (req,res) => {
             Report.countDocuments({ status: 'pending' })
         ]);
 
-        // Return all statistics
         res.status(200).json({
             success: true,
             data: {
@@ -33,5 +31,40 @@ exports.getStatOverAll = async (req,res) => {
     } catch(err){
         console.error(err);
         res.status(400).json({ success: false, message: 'Error fetching statistics'});    
+    }
+}
+
+exports.getDailyActivity = async (req, res) => {
+    try {
+        const { date } = req.body;
+        if (!date) {
+            return res.status(400).json({ success: false, message: 'Date is required in body (YYYY-MM-DD)' });
+        }
+        const start = new Date(date);
+        const end = new Date(date);
+        end.setDate(end.getDate() + 1);
+
+        const dateRange = { $gte: start, $lt: end };
+
+        const [quizCreated, quizUpdated, keywordCreated, keywordUpdated, reportCreated, reportUpdated] = await Promise.all([
+            Quiz.countDocuments({ createdAt: dateRange }),
+            Quiz.countDocuments({ updatedAt: dateRange, $expr: { $ne: ["$createdAt", "$updatedAt"] } }),
+            Keyword.countDocuments({ createdAt: dateRange }),
+            Keyword.countDocuments({ updatedAt: dateRange, $expr: { $ne: ["$createdAt", "$updatedAt"] } }),
+            Report.countDocuments({ createdAt: dateRange }),
+            Report.countDocuments({ updatedAt: dateRange, $expr: { $ne: ["$createdAt", "$updatedAt"] } })
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                quiz: { created: quizCreated, updated: quizUpdated },
+                keyword: { created: keywordCreated, updated: keywordUpdated },
+                report: { created: reportCreated, updated: reportUpdated }
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(400).json({ success: false, message: 'Error fetching daily activity' });
     }
 }

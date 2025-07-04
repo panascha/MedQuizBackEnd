@@ -1,6 +1,8 @@
 const Quiz = require('../models/Quiz');
 const Subject = require('../models/Subject');
 const Category = require('../models/Category');
+const fs = require('fs');
+const path = require('path');
 
 exports.getQuizzes = async (req, res, next) => {
     try {
@@ -110,7 +112,9 @@ exports.createQuiz = async (req, res, next) => {
 
         // Handle multiple images
         if (req.files && req.files.length > 0) {
-            req.body.img = req.files.map(file => `/public/${file.filename}`);
+            const subjectId = req.body.subject || 'default';
+            const categoryId = req.body.category || 'default';
+            req.body.img = req.files.map(file => `/public/quizzes/${subjectId}/${categoryId}/${file.filename}`);
         } else {
             req.body.img = [];
         }
@@ -142,7 +146,9 @@ exports.updateQuiz = async (req, res) => {
 
         // Handle multiple images
         if (req.files && req.files.length > 0) {
-            req.body.img = req.files.map(file => `/public/${file.filename}`);
+            const subjectId = req.body.subject || quiz.subject || 'default';
+            const categoryId = req.body.category || quiz.category || 'default';
+            req.body.img = req.files.map(file => `/public/quizzes/${subjectId}/${categoryId}/${file.filename}`);
         }
 
         const updatedQuiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, {
@@ -159,7 +165,6 @@ exports.updateQuiz = async (req, res) => {
 
 exports.deleteQuiz = async (req, res, next) => {
     try {
-
         const isAdmin = req.user.role === "admin";
         const isSAdmin = req.user.role === "S-admin";
 
@@ -174,6 +179,20 @@ exports.deleteQuiz = async (req, res, next) => {
         if (!quiz) {
             return res.status(400).json({ success: false });
         }
+
+        if (quiz.img && Array.isArray(quiz.img)) {
+            for (const imgPath of quiz.img) {
+                if (imgPath.startsWith('/public/')) {
+                    const filePath = path.join(__dirname, '..', imgPath);
+                    fs.unlink(filePath, (err) => {
+                        if (err) {
+                            console.error(`Failed to delete image file: ${filePath}`, err);
+                        }
+                    });
+                }
+            }
+        }
+
         res.status(200).json({ success: true, data: {} });
 
     } catch (error) {

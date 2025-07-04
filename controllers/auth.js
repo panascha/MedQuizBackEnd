@@ -161,4 +161,22 @@ exports.updateUser = async (req, res) => {
       });
     }
   };
+
+/**
+ * @desc Get all users
+ * @route GET /api/v1/auth/users
+ * @access Private (admin/S-admin only)
+ */
+exports.getAllUser = async (req, res) => {
+    try {
+        const users = await User.find({}, 'name email year role');
+        res.status(200).json({
+            success: true,
+            data: users
+        });
+    } catch (error) {
+        console.error(error.stack);
+        res.status(500).json({ success: false, message: 'Error fetching users' });
+    }
+};
   

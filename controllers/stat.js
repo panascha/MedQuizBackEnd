@@ -122,17 +122,36 @@ exports.getStatUser = async (req, res) => {
     }
 }
 
-exports.getStatByUserId = async (req, res) => {
+exports.getStatByUserIdAndSubject = async (req, res) => {
     try {
         const userId = req.params.userId;
-        if (!userId) {
-            return res.status(400).json({ success: false, message: 'userId is required in params' });
+        const subjectId = req.params.subjectId;
+        if (!userId || !subjectId) {
+            return res.status(400).json({ success: false, message: 'userId and subjectId are required in params' });
         }
+        const quizCountPromise = Quiz.countDocuments({ user: userId, subject: subjectId });
+        const keywordCountPromise = Keyword.countDocuments({ user: userId, subject: subjectId });
+        const reportCountPromise = (async () => {
+            const [quizIds, keywordIds] = await Promise.all([
+                Quiz.find({ subject: subjectId }, '_id'),
+                Keyword.find({ subject: subjectId }, '_id')
+            ]);
+            const quizIdList = quizIds.map(q => q._id);
+            const keywordIdList = keywordIds.map(k => k._id);
+            return Report.countDocuments({
+                User: userId,
+                $or: [
+                    { originalQuiz: { $in: quizIdList } },
+                    { originalKeyword: { $in: keywordIdList } }
+                ]
+            });
+        })();
+        const userPromise = User.findById(userId, 'name email role');
         const [quizCount, keywordCount, reportCount, user] = await Promise.all([
-            Quiz.countDocuments({ user: userId }),
-            Keyword.countDocuments({ user: userId }),
-            Report.countDocuments({ User: userId }),
-            User.findById(userId, 'name email role')
+            quizCountPromise,
+            keywordCountPromise,
+            reportCountPromise,
+            userPromise
         ]);
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -150,6 +169,6 @@ exports.getStatByUserId = async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(400).json({ success: false, message: 'Error fetching user statistics' });
+        res.status(400).json({ success: false, message: 'Error fetching user statistics by subject' });
     }
-}
+};

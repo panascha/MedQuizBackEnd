@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, logout, getMe, updateUser } = require('../controllers/auth');
+const { register, login, logout, getMe, updateUser, getAllUser } = require('../controllers/auth');
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -9,5 +9,6 @@ router.post('/login', login);
 router.get('/logout', protect, logout);
 router.get('/me', protect, getMe);
 router.put("/updateUser/:id", protect, authorize("S-admin","admin", "user"), updateUser);
+router.get('/users', protect, authorize('admin', 'S-admin'), getAllUser);
 
 module.exports = router;

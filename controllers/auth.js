@@ -161,7 +161,7 @@ exports.updateUser = async (req, res) => {
       });
     }
   };
-
+  
 /**
  * @desc Get all users
  * @route GET /api/v1/auth/users
@@ -177,6 +177,25 @@ exports.getAllUser = async (req, res) => {
     } catch (error) {
         console.error(error.stack);
         res.status(500).json({ success: false, message: 'Error fetching users' });
+    }
+};
+
+/**
+ * @desc Check if user exists by email
+ * @route GET /api/v1/auth/user-exists?email=...
+ * @access Public (or you can protect if needed)
+ */
+exports.checkUserExists = async (req, res) => {
+    try {
+        const { email } = req.query;
+        if (!email) {
+            return res.status(400).json({ exists: false, message: 'Email is required' });
+        }
+        const user = await User.findOne({ email });
+        res.status(200).json({ exists: !!user });
+    } catch (error) {
+        console.error(error.stack);
+        res.status(500).json({ exists: false, message: 'Error checking user existence' });
     }
 };
   

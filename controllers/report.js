@@ -1,13 +1,13 @@
 const Quiz = require('../models/Quiz');
 const Keyword = require('../models/Keyword');
 const Report = require('../models/Report');
+const fs = require('fs');
+const path = require('path');
 
 exports.getReports = async (req, res, next) => {
     try {
-        // Get status from query parameters
         const { status } = req.query;
         
-        // Build query object
         const query = {};
         if (status) {
             query.status = status;
@@ -256,11 +256,25 @@ exports.deleteReport = async (req, res, next) => {
         if (!report) {
             return res.status(400).json({ success: false });
         }
-
+        const deleteQuizAndImages = async (quizId) => {
+            const quiz = await Quiz.findByIdAndDelete(quizId);
+            if (quiz && quiz.img && Array.isArray(quiz.img)) {
+                for (const imgPath of quiz.img) {
+                    if (imgPath.startsWith('/public/')) {
+                        const filePath = path.join(__dirname, '..', imgPath);
+                        fs.unlink(filePath, (err) => {
+                            if (err) {
+                                console.error(`Failed to delete image file: ${filePath}`, err);
+                            }
+                        });
+                    }
+                }
+            }
+        };
         if (report.status === 'approved' && report.originalQuiz) {
-            await Quiz.findByIdAndDelete(report.originalQuiz);
+            await deleteQuizAndImages(report.originalQuiz);
         } else if (report.status === 'rejected' && report.suggestedChanges) {
-            await Quiz.findByIdAndDelete(report.suggestedChanges);
+            await deleteQuizAndImages(report.suggestedChanges);
         }
 
         res.status(200).json({ success: true, data: {} });

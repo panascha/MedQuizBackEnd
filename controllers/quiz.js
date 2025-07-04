@@ -144,7 +144,6 @@ exports.updateQuiz = async (req, res) => {
             req.body.approved = false;
         }
 
-        // Handle multiple images
         if (req.files && req.files.length > 0) {
             const subjectId = req.body.subject || quiz.subject || 'default';
             const categoryId = req.body.category || quiz.category || 'default';

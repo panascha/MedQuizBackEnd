@@ -54,7 +54,9 @@ app.use('/api/v1/images', image);
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+});
 
 process.on('unhandledRejection', (err, promise) => {
     console.error(`Error : ${err.message}`);

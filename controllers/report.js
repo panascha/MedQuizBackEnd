@@ -3,6 +3,9 @@ const Keyword = require('../models/Keyword');
 const Report = require('../models/Report');
 const fs = require('fs');
 const path = require('path');
+const Image = require('../models/Image');
+const mongoose = require('mongoose');
+const { GridFSBucket } = require('mongodb');
 
 exports.getReports = async (req, res, next) => {
     try {
@@ -258,23 +261,50 @@ exports.deleteReport = async (req, res, next) => {
         }
         const deleteQuizAndImages = async (quizId) => {
             const quiz = await Quiz.findByIdAndDelete(quizId);
-            if (quiz && quiz.img && Array.isArray(quiz.img)) {
-                for (const imgPath of quiz.img) {
-                    if (imgPath.startsWith('/public/')) {
-                        const filePath = path.join(__dirname, '..', imgPath);
-                        fs.unlink(filePath, (err) => {
-                            if (err) {
-                                console.error(`Failed to delete image file: ${filePath}`, err);
-                            }
-                        });
+            const images = await Image.find({ quizId });
+            if (images.length > 0) {
+                const db = mongoose.connection.db;
+                const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+                for (const image of images) {
+                    if (image.gridFsFilename) {
+                        const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
+                        for (const file of files) {
+                            await bucket.delete(file._id);
+                        }
                     }
+                    await Image.findByIdAndDelete(image._id);
                 }
             }
         };
-        if (report.status === 'approved' && report.originalQuiz) {
-            await deleteQuizAndImages(report.originalQuiz);
-        } else if (report.status === 'rejected' && report.suggestedChanges) {
-            await deleteQuizAndImages(report.suggestedChanges);
+        const deleteKeywordAndImages = async (keywordId) => {
+            const keyword = await Keyword.findByIdAndDelete(keywordId);
+            const images = await Image.find({ keywordId });
+            if (images.length > 0) {
+                const db = mongoose.connection.db;
+                const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+                for (const image of images) {
+                    if (image.gridFsFilename) {
+                        const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
+                        for (const file of files) {
+                            await bucket.delete(file._id);
+                        }
+                    }
+                    await Image.findByIdAndDelete(image._id);
+                }
+            }
+        };
+        if (report.type === 'quiz') {
+            if (report.status === 'approved' && report.originalQuiz) {
+                await deleteQuizAndImages(report.originalQuiz);
+            } else if (report.status === 'rejected' && report.suggestedChanges) {
+                await deleteQuizAndImages(report.suggestedChanges);
+            }
+        } else if (report.type === 'keyword') {
+            if (report.status === 'approved' && report.originalKeyword) {
+                await deleteKeywordAndImages(report.originalKeyword);
+            } else if (report.status === 'rejected' && report.suggestedChangesKeyword) {
+                await deleteKeywordAndImages(report.suggestedChangesKeyword);
+            }
         }
 
         res.status(200).json({ success: true, data: {} });

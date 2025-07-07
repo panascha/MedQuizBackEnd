@@ -3,6 +3,9 @@ const Subject = require('../models/Subject');
 const Category = require('../models/Category');
 const fs = require('fs');
 const path = require('path');
+const Image = require('../models/Image');
+const mongoose = require('mongoose');
+const { GridFSBucket } = require('mongodb');
 
 exports.getQuizzes = async (req, res, next) => {
     try {
@@ -184,16 +187,18 @@ exports.deleteQuiz = async (req, res, next) => {
             return res.status(400).json({ success: false });
         }
 
-        if (quiz.img && Array.isArray(quiz.img)) {
-            for (const imgPath of quiz.img) {
-                if (imgPath.startsWith('/public/')) {
-                    const filePath = path.join(__dirname, '..', imgPath);
-                    fs.unlink(filePath, (err) => {
-                        if (err) {
-                            console.error(`Failed to delete image file: ${filePath}`, err);
-                        }
-                    });
+        const images = await Image.find({ quizId: req.params.id });
+        if (images.length > 0) {
+            const db = mongoose.connection.db;
+            const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+            for (const image of images) {
+                if (image.gridFsFilename) {
+                    const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
+                    for (const file of files) {
+                        await bucket.delete(file._id);
+                    }
                 }
+                await Image.findByIdAndDelete(image._id);
             }
         }
 

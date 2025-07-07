@@ -1,4 +1,12 @@
 const Subject = require('../models/Subject')
+const Category = require('../models/Category')
+const Quiz = require('../models/Quiz')
+const Image = require('../models/Image')
+const Keyword = require('../models/Keyword')
+const Score = require('../models/Score')
+const Report = require('../models/Report')
+const mongoose = require('mongoose');
+const { GridFSBucket } = require('mongodb');
 
 exports.getSubjects = async (req, res, next) => {
     try {
@@ -110,6 +118,26 @@ exports.deleteSubject = async (req, res, next) => {
 
         if (!subject) {
             return res.status(400).json({ success: false });
+        }
+
+        await Category.deleteMany({ subject: req.params.id });
+        await Quiz.deleteMany({ subject: req.params.id });
+        await Keyword.deleteMany({ subject: req.params.id });
+        await Score.deleteMany({ subject: req.params.id });
+        await Report.deleteMany({ subject: req.params.id });
+        const images = await Image.find({ subjectId: req.params.id });
+        if (images.length > 0) {
+            const db = mongoose.connection.db;
+            const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+            for (const image of images) {
+                if (image.gridFsFilename) {
+                    const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
+                    for (const file of files) {
+                        await bucket.delete(file._id);
+                    }
+                }
+                await Image.findByIdAndDelete(image._id);
+            }
         }
 
         res.status(200).json({ success: true, data: {} });

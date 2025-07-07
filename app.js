@@ -18,8 +18,12 @@ if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
 }
 
+const isVercel = !!process.env.VERCEL;
+
 app.use(cors());
-app.use(express.json());
+if (!isVercel) {
+  app.use(express.json());
+}
 app.use(cookieParser());
 app.use(mongoSanitize());
 app.use(helmet());

@@ -20,8 +20,8 @@ const subjectSchema = new Schema({
     type: String,
     required: [true, 'Image is required'],
     match: [
-      /^\/public\/subjects\/.+$/,
-      'Image path must be in the subjects directory'
+      /^(\/public\/subjects\/|\/api\/v1\/images\/).+$/,
+      'Image path must be in the subjects directory or be an API image URL'
     ]
   },
   year: {

@@ -35,11 +35,11 @@ const auth = require('./routes/auth');
 const quiz = require('./routes/quiz');
 const category = require('./routes/category');
 const subject = require('./routes/subject');
-const upload = require('./routes/upload');
 const report = require('./routes/report');
 const approved = require('./routes/approved');
 const keyword = require('./routes/keyword');
 const stat = require('./routes/stat');
+const image = require('./routes/image');
 
 app.use('/api/v1/score', score);
 app.use('/api/v1/auth', auth);
@@ -50,8 +50,8 @@ app.use('/api/v1/report', report);
 app.use('/api/v1/approved', approved);
 app.use('/api/v1/keyword', keyword);
 app.use('/api/v1/stat', stat);
+app.use('/api/v1/images', image);
 app.use('/public', express.static(path.join(__dirname, 'public')));
-app.use('/', upload);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`));

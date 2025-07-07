@@ -110,11 +110,13 @@ exports.createQuiz = async (req, res, next) => {
             });
         }
 
-        // Handle multiple images
-        if (req.files && req.files.length > 0) {
-            const subjectId = req.body.subject || 'default';
-            const categoryId = req.body.category || 'default';
-            req.body.img = req.files.map(file => `/public/quizzes/${subjectId}/${categoryId}/${file.filename}`);
+        // Accept image URLs from req.body.img (array or string)
+        if (req.body.img) {
+            if (Array.isArray(req.body.img)) {
+                req.body.img = req.body.img;
+            } else if (typeof req.body.img === 'string') {
+                req.body.img = [req.body.img];
+            }
         } else {
             req.body.img = [];
         }
@@ -144,10 +146,13 @@ exports.updateQuiz = async (req, res) => {
             req.body.approved = false;
         }
 
-        if (req.files && req.files.length > 0) {
-            const subjectId = req.body.subject || quiz.subject || 'default';
-            const categoryId = req.body.category || quiz.category || 'default';
-            req.body.img = req.files.map(file => `/public/quizzes/${subjectId}/${categoryId}/${file.filename}`);
+        // Accept image URLs from req.body.img (array or string)
+        if (req.body.img) {
+            if (Array.isArray(req.body.img)) {
+                req.body.img = req.body.img;
+            } else if (typeof req.body.img === 'string') {
+                req.body.img = [req.body.img];
+            }
         }
 
         const updatedQuiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, {

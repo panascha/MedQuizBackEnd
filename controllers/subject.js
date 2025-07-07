@@ -43,18 +43,19 @@ exports.createSubject = async (req, res, next) => {
         });
       }
   
-      const { name, description, year} = req.body;
+      const { name, description, year, img } = req.body;
       const NYear = Number(year);
-      if (!req.file) {
+      let imgPath = '';
+      if (img) {
+        imgPath = img;
+      } else {
         return res.status(400).json({ success: false, message: "Image is required" });
       }
-  
-      const imgPath = `/public/${req.file.filename}`;
   
       const subject = await Subject.create({
         name,
         description,
-        NYear,
+        year: NYear,
         img: imgPath,
       });
   
@@ -78,8 +79,8 @@ exports.createSubject = async (req, res, next) => {
         year: req.body.year
       };
   
-      if (req.file) {
-        updateData.img = `/public/subjects/${req.file.filename}`;
+      if (req.body.img) {
+        updateData.img = req.body.img;
       }
   
       const subject = await Subject.findByIdAndUpdate(req.params.id, updateData, {

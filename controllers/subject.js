@@ -15,8 +15,6 @@ exports.getSubjects = async (req, res, next) => {
                 path: "Category", 
                 select: "category description"
             });
-
-        if(subject.length <= 0) return res.status(404).json({ success: false, message: "there is no subject"});
         res.status(200).json({ success: true, count: subject.length, data: subject });
     } 
     catch (error) {

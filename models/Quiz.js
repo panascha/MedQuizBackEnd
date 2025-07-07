@@ -71,9 +71,12 @@ const QuizSchema = new mongoose.Schema({
         type: [String],
         validate: {
             validator: function(images) {
-                return images.length <= 5;
+                return images.every(img =>
+                    /^\/public\/quizzes\/.+$/.test(img) ||
+                    /^\/api\/v1\/images\/.+$/.test(img)
+                ) && images.length <= 5;
             },
-            message: 'Maximum 5 images allowed per question'
+            message: 'Maximum 5 images allowed per question and must be valid image URLs'
         }
     },
     createdAt: {

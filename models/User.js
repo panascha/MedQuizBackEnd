@@ -8,7 +8,7 @@ const UserSchema = new mongoose.Schema({
         required: [true, 'Please add an email'],
         unique: true,
         match: [
-            /^[a-zA-Z0-9._%+-]+@kkumail\.ac\.th$/,
+            /^[a-zA-Z0-9._%+-]+@kkumail\.(com|ac\.th)$/,
             'Please use a valid KKUMail address'
         ],
         trim: true,

@@ -11,25 +11,24 @@ const fs = require('fs');
 const app = express();
 
 const connectDB = require('./config/db');
-
 connectDB();
 
-// Create public folder if it doesn't exist
 const publicDir = path.join(__dirname, 'public');
 if (!fs.existsSync(publicDir)) {
     fs.mkdirSync(publicDir, { recursive: true });
 }
 
-app.use(cors());
+const isVercel = !!process.env.VERCEL;
 
-//security
-app.use(express.json());
+app.use(cors());
+if (!isVercel) {
+  app.use(express.json());
+}
 app.use(cookieParser());
 app.use(mongoSanitize());
 app.use(helmet());
 app.use(xss());
 
-//create router
 const score = require('./routes/score');
 const auth = require('./routes/auth');
 const quiz = require('./routes/quiz');
@@ -53,17 +52,4 @@ app.use('/api/v1/stat', stat);
 app.use('/api/v1/images', image);
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
-
-process.on('unhandledRejection', (err, promise) => {
-    console.error(`Error : ${err.message}`);
-    server.close(() => process.exit(1));
-});
-
-process.on('uncaughtException', (err, promise) => {
-    console.error(`Error : ${err.message}`);
-    server.close(() => process.exit(1));
-});
+module.exports = app; 

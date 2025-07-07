@@ -1,4 +1,12 @@
 const Subject = require('../models/Subject')
+const Category = require('../models/Category')
+const Quiz = require('../models/Quiz')
+const Image = require('../models/Image')
+const Keyword = require('../models/Keyword')
+const Score = require('../models/Score')
+const Report = require('../models/Report')
+const mongoose = require('mongoose');
+const { GridFSBucket } = require('mongodb');
 
 exports.getSubjects = async (req, res, next) => {
     try {
@@ -7,8 +15,6 @@ exports.getSubjects = async (req, res, next) => {
                 path: "Category", 
                 select: "category description"
             });
-
-        if(subject.length <= 0) return res.status(404).json({ success: false, message: "there is no subject"});
         res.status(200).json({ success: true, count: subject.length, data: subject });
     } 
     catch (error) {
@@ -43,18 +49,19 @@ exports.createSubject = async (req, res, next) => {
         });
       }
   
-      const { name, description, year} = req.body;
+      const { name, description, year, img } = req.body;
       const NYear = Number(year);
-      if (!req.file) {
+      let imgPath = '';
+      if (img) {
+        imgPath = img;
+      } else {
         return res.status(400).json({ success: false, message: "Image is required" });
       }
-  
-      const imgPath = `/public/${req.file.filename}`;
   
       const subject = await Subject.create({
         name,
         description,
-        NYear,
+        year: NYear,
         img: imgPath,
       });
   
@@ -78,8 +85,8 @@ exports.createSubject = async (req, res, next) => {
         year: req.body.year
       };
   
-      if (req.file) {
-        updateData.img = `/public/subjects/${req.file.filename}`;
+      if (req.body.img) {
+        updateData.img = req.body.img;
       }
   
       const subject = await Subject.findByIdAndUpdate(req.params.id, updateData, {
@@ -109,6 +116,26 @@ exports.deleteSubject = async (req, res, next) => {
 
         if (!subject) {
             return res.status(400).json({ success: false });
+        }
+
+        await Category.deleteMany({ subject: req.params.id });
+        await Quiz.deleteMany({ subject: req.params.id });
+        await Keyword.deleteMany({ subject: req.params.id });
+        await Score.deleteMany({ subject: req.params.id });
+        await Report.deleteMany({ subject: req.params.id });
+        const images = await Image.find({ subjectId: req.params.id });
+        if (images.length > 0) {
+            const db = mongoose.connection.db;
+            const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+            for (const image of images) {
+                if (image.gridFsFilename) {
+                    const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
+                    for (const file of files) {
+                        await bucket.delete(file._id);
+                    }
+                }
+                await Image.findByIdAndDelete(image._id);
+            }
         }
 
         res.status(200).json({ success: true, data: {} });

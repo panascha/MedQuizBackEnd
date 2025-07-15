@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-// Subdocument schema for individual questions
 const QuestionSchema = new mongoose.Schema({
     Quiz: {
         type: mongoose.Schema.ObjectId,
@@ -15,6 +14,11 @@ const QuestionSchema = new mongoose.Schema({
     isCorrect: {
         type: Boolean,
         required: [true, 'Correctness status is required']
+    },
+    isBookmarked: {
+        type: Boolean,
+        required: true,
+        default: false
     }
 }, { _id: false });
 

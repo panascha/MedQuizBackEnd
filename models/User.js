@@ -45,6 +45,20 @@ const UserSchema = new mongoose.Schema({
         },
         default: 'user'
     },
+    status: {
+        isBanned: {
+            type: Boolean,
+            default: false
+        },
+        banReason: {
+            type: String,
+            default: ''
+        },
+        banUntil: {
+            type: Date,
+            default: null
+        }
+    },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
     createdAt: {

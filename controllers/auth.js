@@ -198,4 +198,49 @@ exports.checkUserExists = async (req, res) => {
         res.status(500).json({ exists: false, message: 'Error checking user existence' });
     }
 };
+
+/**
+ * @desc Ban a user
+ * @route POST /api/v1/auth/ban/:id
+ * @access Private (S-admin only)
+ */
+exports.banUser = async (req, res) => {
+    try {
+        const { reason, banUntil } = req.body;
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        user.status.isBanned = true;
+        user.status.banReason = reason || '';
+        user.status.banUntil = banUntil || null;
+        await user.save();
+        res.status(200).json({ success: true, message: 'User banned successfully', data: user });
+    } catch (error) {
+        console.error(error.stack);
+        res.status(500).json({ success: false, message: 'Error banning user' });
+    }
+};
+
+/**
+ * @desc Unban a user
+ * @route POST /api/v1/auth/unban/:id
+ * @access Private (S-admin only)
+ */
+exports.unbanUser = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        user.status.isBanned = false;
+        user.status.banReason = '';
+        user.status.banUntil = null;
+        await user.save();
+        res.status(200).json({ success: true, message: 'User unbanned successfully', data: user });
+    } catch (error) {
+        console.error(error.stack);
+        res.status(500).json({ success: false, message: 'Error unbanning user' });
+    }
+};
   

@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Blacklist = require('../models/Blacklist');
+const sendEmail = require('../utils/sendEmail');
 
 
 const sendTokenResponse = (user, statusCode, res) => {
@@ -242,5 +243,61 @@ exports.unbanUser = async (req, res) => {
         console.error(error.stack);
         res.status(500).json({ success: false, message: 'Error unbanning user' });
     }
+};
+
+exports.requestOTP = async (req, res) => {
+  const { email } = req.body;
+  // If user is authenticated, ensure they can only request OTP for their own account
+  if (req.user && req.user.email !== email) {
+    return res.status(403).json({ success: false, message: 'You are not authorized to request an OTP for this account.' });
+  }
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'No user with that email' });
+  }
+
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otpCode = otp;
+  user.otpExpire = Date.now() + 5 * 60 * 1000; 
+  await user.save({ validateBeforeSave: false });
+
+  // Send OTP via email
+  await sendEmail({
+    to: user.email,
+    subject: 'Password Reset Request - MDKKU Self-Exam Bank',
+    text: `Dear ${user.name || 'User'},
+
+We received a request to reset your password for your MDKKU Self-Exam Bank account.
+
+Your One-Time Password (OTP) is:
+
+    ${otp}
+
+This OTP is valid for 5 minutes. Please enter this code in the password reset page to proceed.
+
+If you did not request a password reset, please ignore this email. Do not share this code with anyone for your account's security.
+
+Best regards,
+MDKKU Self-Exam Bank
+`,
+  });
+
+  res.status(200).json({ success: true, message: 'OTP sent to email', data: otp });
+};
+
+exports.resetPasswordWithOTP = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  const user = await User.findOne({ email, otpCode: otp, otpExpire: { $gt: Date.now() } });
+  if (!user) {
+    return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+  }
+
+  user.password = newPassword;
+  user.otpCode = undefined;
+  user.otpExpire = undefined;
+  await user.save();
+
+  res.status(200).json({ success: true, message: 'Password reset successful' });
 };
   

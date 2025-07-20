@@ -1,5 +1,5 @@
 const express = require('express');
-const { register, login, logout, getMe, updateUser, getAllUser, checkUserExists, banUser, unbanUser } = require('../controllers/auth');
+const { register, login, logout, getMe, updateUser, getAllUser, checkUserExists, banUser, unbanUser, requestOTP, resetPasswordWithOTP} = require('../controllers/auth');
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
@@ -13,5 +13,7 @@ router.get('/users', protect, authorize('admin', 'S-admin'), getAllUser);
 router.get('/user-exists', checkUserExists);
 router.post('/ban/:id', protect, authorize('S-admin'), banUser);
 router.post('/unban/:id', protect, authorize('S-admin'), unbanUser);
+router.post('/request-reset-otp', protect, authorize("S-admin","admin", "user"), requestOTP);
+router.post('/reset-password-otp', protect, authorize("S-admin","admin", "user"), resetPasswordWithOTP);
 
 module.exports = router;

@@ -247,22 +247,16 @@ exports.unbanUser = async (req, res) => {
 
 exports.requestOTP = async (req, res) => {
   const { email } = req.body;
-  // If user is authenticated, ensure they can only request OTP for their own account
-  if (req.user && req.user.email !== email) {
-    return res.status(403).json({ success: false, message: 'You are not authorized to request an OTP for this account.' });
-  }
   const user = await User.findOne({ email });
   if (!user) {
     return res.status(404).json({ success: false, message: 'No user with that email' });
   }
 
-  // Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otpCode = otp;
   user.otpExpire = Date.now() + 5 * 60 * 1000; 
   await user.save({ validateBeforeSave: false });
 
-  // Send OTP via email
   await sendEmail({
     to: user.email,
     subject: 'Password Reset Request - MDKKU Self-Exam Bank',

@@ -8,12 +8,12 @@ router.post('/register', register);
 router.post('/login', login);
 router.get('/logout', protect, logout);
 router.get('/me', protect, getMe);
+router.post('/request-reset-otp', protect, requestOTP);
+router.post('/reset-password-otp', protect, resetPasswordWithOTP);
 router.put("/updateUser/:id", protect, authorize("S-admin","admin", "user"), updateUser);
 router.get('/users', protect, authorize('admin', 'S-admin'), getAllUser);
 router.get('/user-exists', checkUserExists);
 router.post('/ban/:id', protect, authorize('S-admin'), banUser);
 router.post('/unban/:id', protect, authorize('S-admin'), unbanUser);
-router.post('/request-reset-otp', protect, authorize("S-admin","admin", "user"), requestOTP);
-router.post('/reset-password-otp', protect, authorize("S-admin","admin", "user"), resetPasswordWithOTP);
 
 module.exports = router;

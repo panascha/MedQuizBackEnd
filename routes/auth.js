@@ -10,7 +10,7 @@ router.post('/login', login);
 router.get('/logout', protect, logout);
 router.get('/me', protect, getMe);
 router.post('/request-reset-otp', otpLimiter, requestOTP);
-router.post('/reset-password-otp', protect, resetPasswordWithOTP);
+router.post('/reset-password-otp', resetPasswordWithOTP);
 router.put("/updateUser/:id", protect, authorize("S-admin","admin", "user"), updateUser);
 router.get('/users', protect, authorize('admin', 'S-admin'), getAllUser);
 router.get('/user-exists', checkUserExists);

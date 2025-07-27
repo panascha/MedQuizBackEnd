@@ -7,6 +7,7 @@ const Score = require('../models/Score')
 const Report = require('../models/Report')
 const mongoose = require('mongoose');
 const { GridFSBucket } = require('mongodb');
+const { deleteOldImage, deleteImagesBySubjectId } = require('../utils/imageUtils');
 
 exports.getSubjects = async (req, res, next) => {
     try {
@@ -78,6 +79,12 @@ exports.createSubject = async (req, res, next) => {
       if (req.user.role !== 'S-admin') {
         return res.status(403).json({ success: false, message: "You have no permission to update this subject" });
       }
+
+      // Get the existing subject to access the old image path
+      const existingSubject = await Subject.findById(req.params.id);
+      if (!existingSubject) {
+        return res.status(404).json({ success: false, message: "Subject not found" });
+      }
   
       const updateData = {
         name: req.body.name,
@@ -85,7 +92,12 @@ exports.createSubject = async (req, res, next) => {
         year: req.body.year
       };
   
+      // If a new image is provided, delete the old image and update the path
       if (req.body.img) {
+        // Delete old image if it exists and is different from the new one
+        if (existingSubject.img && existingSubject.img !== req.body.img) {
+          await deleteOldImage(existingSubject.img);
+        }
         updateData.img = req.body.img;
       }
   
@@ -93,10 +105,6 @@ exports.createSubject = async (req, res, next) => {
         new: true,
         runValidators: true,
       });
-  
-      if (!subject) {
-        return res.status(404).json({ success: false, message: "Subject not found" });
-      }
   
       res.status(200).json({ success: true, data: subject });
     } catch (error) {
@@ -123,20 +131,9 @@ exports.deleteSubject = async (req, res, next) => {
         await Keyword.deleteMany({ subject: req.params.id });
         await Score.deleteMany({ subject: req.params.id });
         await Report.deleteMany({ subject: req.params.id });
-        const images = await Image.find({ subjectId: req.params.id });
-        if (images.length > 0) {
-            const db = mongoose.connection.db;
-            const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
-            for (const image of images) {
-                if (image.gridFsFilename) {
-                    const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
-                    for (const file of files) {
-                        await bucket.delete(file._id);
-                    }
-                }
-                await Image.findByIdAndDelete(image._id);
-            }
-        }
+        
+        // Delete all images associated with this subject
+        await deleteImagesBySubjectId(req.params.id);
 
         res.status(200).json({ success: true, data: {} });
     } catch (error) {

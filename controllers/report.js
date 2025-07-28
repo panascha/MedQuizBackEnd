@@ -1,11 +1,7 @@
 const Quiz = require('../models/Quiz');
 const Keyword = require('../models/Keyword');
 const Report = require('../models/Report');
-const fs = require('fs');
-const path = require('path');
-const Image = require('../models/Image');
-const mongoose = require('mongoose');
-const { GridFSBucket } = require('mongodb');
+const { deleteQuizAndImages } = require('../utils/imageUtils');
 
 exports.getReports = async (req, res, next) => {
     try {
@@ -259,51 +255,23 @@ exports.deleteReport = async (req, res, next) => {
         if (!report) {
             return res.status(400).json({ success: false });
         }
-        const deleteQuizAndImages = async (quizId) => {
-            const quiz = await Quiz.findByIdAndDelete(quizId);
-            const images = await Image.find({ quizId });
-            if (images.length > 0) {
-                const db = mongoose.connection.db;
-                const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
-                for (const image of images) {
-                    if (image.gridFsFilename) {
-                        const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
-                        for (const file of files) {
-                            await bucket.delete(file._id);
-                        }
-                    }
-                    await Image.findByIdAndDelete(image._id);
-                }
-            }
-        };
-        const deleteKeywordAndImages = async (keywordId) => {
-            const keyword = await Keyword.findByIdAndDelete(keywordId);
-            const images = await Image.find({ keywordId });
-            if (images.length > 0) {
-                const db = mongoose.connection.db;
-                const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
-                for (const image of images) {
-                    if (image.gridFsFilename) {
-                        const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
-                        for (const file of files) {
-                            await bucket.delete(file._id);
-                        }
-                    }
-                    await Image.findByIdAndDelete(image._id);
-                }
-            }
-        };
+        // Determine if original and suggested quiz IDs match
+        const isSameQuiz = report.originalQuiz && report.suggestedChanges &&
+                           report.originalQuiz.toString() === report.suggestedChanges.toString();
+
+        // Delete quiz record and images using utility
         if (report.type === 'quiz') {
             if (report.status === 'approved' && report.originalQuiz) {
-                await deleteQuizAndImages(report.originalQuiz);
+                await deleteQuizAndImages(report.originalQuiz, isSameQuiz);
             } else if (report.status === 'rejected' && report.suggestedChanges) {
-                await deleteQuizAndImages(report.suggestedChanges);
+                await deleteQuizAndImages(report.suggestedChanges, isSameQuiz);
             }
         } else if (report.type === 'keyword') {
+            // Keywords have no images
             if (report.status === 'approved' && report.originalKeyword) {
-                await deleteKeywordAndImages(report.originalKeyword);
+                await Keyword.findByIdAndDelete(report.originalKeyword);
             } else if (report.status === 'rejected' && report.suggestedChangesKeyword) {
-                await deleteKeywordAndImages(report.suggestedChangesKeyword);
+                await Keyword.findByIdAndDelete(report.suggestedChangesKeyword);
             }
         }
 

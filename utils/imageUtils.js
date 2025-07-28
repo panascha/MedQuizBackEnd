@@ -55,7 +55,37 @@ const deleteImagesBySubjectId = async (subjectId) => {
   }
 };
 
+/**
+ * Delete quiz and its images from database and GridFS
+ * @param {string} quizId - The quiz ID to delete
+ * @param {boolean} skipImages - Whether to skip deleting images
+ */
+const deleteQuizAndImages = async (quizId, skipImages = false) => {
+  const Quiz = require('../models/Quiz');
+  try {
+    await Quiz.findByIdAndDelete(quizId);
+    if (skipImages) return;
+    const images = await Image.find({ quizId });
+    if (images.length > 0) {
+      const db = mongoose.connection.db;
+      const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+      for (const image of images) {
+        if (image.gridFsFilename) {
+          const files = await db.collection('uploads.files').find({ filename: image.gridFsFilename }).toArray();
+          for (const file of files) {
+            await bucket.delete(file._id);
+          }
+        }
+        await Image.findByIdAndDelete(image._id);
+      }
+    }
+  } catch (error) {
+    console.error('Error deleting quiz and images:', error);
+  }
+};
+
 module.exports = {
   deleteOldImage,
-  deleteImagesBySubjectId
+  deleteImagesBySubjectId,
+  deleteQuizAndImages
 };

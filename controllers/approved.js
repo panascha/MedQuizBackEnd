@@ -3,6 +3,7 @@ const Approved = require('../models/Approved');
 const Quiz = require('../models/Quiz');
 const Report = require('../models/Report');
 const Keyword = require('../models/Keyword');
+const { deleteQuizAndImages } = require('../utils/imageUtils');
 
 exports.getApproveds = async (req, res, next) => {
     try {
@@ -296,20 +297,25 @@ exports.approvedReport = async (req, res) => {
         return res.status(404).json({ success: false, message: "Report not found" });
       }
 
+      const isSameQuiz = report.originalQuiz && report.suggestedChanges &&
+                         report.originalQuiz._id.toString() === report.suggestedChanges._id.toString();
+
       if (report.status !== 'pending') {
         return res.status(400).json({ success: false, message: "This report has already been processed" });
       }
       if (role === 'S-admin') {
         if (report.type === 'quiz') {
           if (isApproved) {
+            await deleteQuizAndImages(report.originalQuiz._id, isSameQuiz);
             await Quiz.findByIdAndUpdate(
               report.suggestedChanges._id,
               { status: "approved" }
             );
           } else {
+            await deleteQuizAndImages(report.suggestedChanges._id, isSameQuiz);
             await Quiz.findByIdAndUpdate(
               report.originalQuiz._id,
-              { status: "approved"}
+              { status: "approved" }
             );
           }
         } else if (report.type === 'keyword') {
@@ -354,6 +360,7 @@ exports.approvedReport = async (req, res) => {
   
       if (approvals >= 2) {
         if (report.type === 'quiz') {
+          await deleteQuizAndImages(report.originalQuiz._id, isSameQuiz);
           await Quiz.findByIdAndUpdate(
             report.suggestedChanges._id,
             { status: "approved" }
@@ -383,11 +390,13 @@ exports.approvedReport = async (req, res) => {
   
       if (denials >= 2) {
         if (report.type === 'quiz') {
+          await deleteQuizAndImages(report.suggestedChanges._id, isSameQuiz);
           await Quiz.findByIdAndUpdate(
             report.originalQuiz._id,
             { status: "approved" }
           );
         } else if (report.type === 'keyword') {
+          await Approved.deleteMany({ keyword: keywordID, type: 'keyword' });
           await Keyword.findByIdAndUpdate(
             report.originalKeyword._id,
             { status: "approved" }
@@ -423,4 +432,3 @@ exports.approvedReport = async (req, res) => {
       res.status(400).json({ success: false, error: error.message });
     }
 };
-  

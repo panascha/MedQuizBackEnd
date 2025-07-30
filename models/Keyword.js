@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const KeywordSchema = new mongoose.Schema({
-    user:{
+    user: {
         type: mongoose.Schema.ObjectId,
         ref: "User",
         required: true,
@@ -10,25 +10,28 @@ const KeywordSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    subject:{
+    subject: {
         type: mongoose.Schema.ObjectId,
         ref: "Subject",
-        require: true
+        required: function() { return !this.isGlobal; }
     },
-    category:{
+    category: {
         type: mongoose.Schema.ObjectId,
         ref: "Category",
-        required: true,
+        required: function() { return !this.isGlobal; }
     },
-    keywords:{
+    keywords: {
         type: [String],
         required: true,
     },
-    status:{
+    status: {
         type: String,
         enum: ["pending", "approved", "rejected", "reported"],
         default: "pending"
-    }
+    },
+    isGlobal: {
+        type: Boolean,
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Keyword', KeywordSchema);

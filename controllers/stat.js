@@ -6,10 +6,10 @@ const User = require('../models/User');
 exports.getStatOverAll = async (req, res) => {
     try{
         const [QuizCount, ReportCount, KeywordCount, UserCount, pendingQuizzes, pendingKeywords, pendingReports] = await Promise.all([
-            Quiz.countDocuments(),
-            Report.countDocuments(),
-            Keyword.countDocuments(),
-            User.countDocuments(),
+            Quiz.countDocuments({ status: 'approved' }),
+            Report.countDocuments({ status: 'approved' }),
+            Keyword.countDocuments({ status: 'approved' }),
+            User.countDocuments({ status: 'approved' }),
             Quiz.countDocuments({ status: 'pending' }),
             Keyword.countDocuments({ status: 'pending' }),
             Report.countDocuments({ status: 'pending' })

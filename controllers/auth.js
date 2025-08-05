@@ -42,6 +42,70 @@ exports.register = async (req, res, next) => {
         res.status(400).json({ success: false });
     }
 };
+// exports.register = async (req, res, next) => {
+//     try {
+//         // Check if request body is an array (bulk registration)
+//         if (Array.isArray(req.body)) {
+//             const users = [];
+//             const errors = [];
+
+//             for (let i = 0; i < req.body.length; i++) {
+//                 try {
+//                     const { name, year, email, password, role } = req.body[i];
+                    
+//                     const user = await User.create({
+//                         name,
+//                         year,
+//                         email,
+//                         password,
+//                         role
+//                     });
+//                     users.push({
+//                         id: user._id,
+//                         name: user.name,
+//                         email: user.email,
+//                         year: user.year,
+//                         role: user.role
+//                     });
+//                 } catch (error) {
+//                     errors.push({
+//                         index: i,
+//                         user: req.body[i],
+//                         error: error.message
+//                     });
+//                 }
+//             }
+
+//             return res.status(201).json({
+//                 success: true,
+//                 message: `${users.length} users created successfully`,
+//                 data: {
+//                     created: users,
+//                     errors: errors,
+//                     total: req.body.length,
+//                     successful: users.length,
+//                     failed: errors.length
+//                 }
+//             });
+//         } else {
+//             // Single user registration (original behavior)
+//             const { name, year, email, password, role } = req.body;
+
+//             const user = await User.create({
+//                 name,
+//                 year,
+//                 email,
+//                 password,
+//                 role
+//             });
+
+//             sendTokenResponse(user, 201, res);
+//         }
+//     } catch (error) {
+//         console.error(error.stack);
+//         res.status(400).json({ success: false, message: error.message });
+//     }
+// };
 
 /**
  * @desc Login user

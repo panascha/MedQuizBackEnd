@@ -279,7 +279,7 @@ MDKKU Self-Exam Bank
 `,
   });
 
-  res.status(200).json({ success: true, message: 'OTP sent to email', data: otp });
+  res.status(200).json({ success: true, message: 'OTP sent to email'});
 };
 
 exports.verifyOTP = async (req, res) => {

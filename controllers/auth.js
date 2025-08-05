@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Blacklist = require('../models/Blacklist');
 const sendEmail = require('../utils/sendEmail');
+const jwt = require('jsonwebtoken');
 
 
 const sendTokenResponse = (user, statusCode, res) => {
@@ -255,6 +256,7 @@ exports.requestOTP = async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otpCode = otp;
   user.otpExpire = Date.now() + 5 * 60 * 1000; 
+  user.otpVerified = false; // Reset verification status
   await user.save({ validateBeforeSave: false });
 
   await sendEmail({
@@ -280,18 +282,118 @@ MDKKU Self-Exam Bank
   res.status(200).json({ success: true, message: 'OTP sent to email', data: otp });
 };
 
-exports.resetPasswordWithOTP = async (req, res) => {
-  const { email, otp, newPassword } = req.body;
-  const user = await User.findOne({ email, otpCode: otp, otpExpire: { $gt: Date.now() } });
-  if (!user) {
-    return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+exports.verifyOTP = async (req, res) => {
+  const { email, otp } = req.body;
+  
+  if (!email || !otp) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Please provide email and OTP' 
+    });
   }
 
-  user.password = newPassword;
-  user.otpCode = undefined;
-  user.otpExpire = undefined;
-  await user.save();
+  const user = await User.findOne({ 
+    email, 
+    otpCode: otp, 
+    otpExpire: { $gt: Date.now() } 
+  });
 
-  res.status(200).json({ success: true, message: 'Password reset successful' });
+  if (!user) {
+    return res.status(400).json({ 
+      success: false, 
+      message: 'Invalid or expired OTP' 
+    });
+  }
+
+  // Generate a temporary token for password reset access with 5-minute expiration
+  const resetToken = user.getResetToken();
+  
+  // Mark OTP as verified but don't clear it yet (will be cleared on password reset)
+  user.otpVerified = true;
+  await user.save({ validateBeforeSave: false });
+
+  res.status(200).json({ 
+    success: true, 
+    message: 'OTP verified successfully',
+    resetToken,
+    expiresIn: '5 minutes',
+    data: {
+      email: user.email,
+      name: user.name
+    }
+  });
+};
+
+/**
+ * @desc Reset password using reset token from OTP verification
+ * @route POST /api/v1/auth/reset-password
+ * @access Private (requires reset token from verifyOTP)
+ * @note This function requires a valid reset token obtained from the verifyOTP endpoint
+ */
+exports.resetPasswordWithToken = async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    const token = req.headers['x-access-token'];
+
+    if (!newPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please provide new password' 
+      });
+    }
+
+    if (!token) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'No reset token provided in x-access-token header' 
+      });
+    }
+
+    // Verify the reset token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid or expired reset token' 
+      });
+    }
+
+    // Get the user from database and check if they have an active OTP session
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+
+    // Check if user has verified OTP and it's still valid
+    if (!user.otpVerified || !user.otpCode || user.otpExpire < Date.now()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'OTP verification required or expired' 
+      });
+    }
+
+    // Update password and clear OTP data
+    user.password = newPassword;
+    user.otpCode = undefined;
+    user.otpExpire = undefined;
+    user.otpVerified = undefined;
+    await user.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Password reset successful' 
+    });
+  } catch (error) {
+    console.error(error.stack);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error resetting password' 
+    });
+  }
 };
   

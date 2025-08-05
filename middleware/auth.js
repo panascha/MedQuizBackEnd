@@ -5,8 +5,13 @@ const Blacklist = require('../models/Blacklist')
 exports.protect = async (req, res, next) => {
     let token;
 
+    // Check for token in Authorization header (Bearer token)
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         token = req.headers.authorization.split(' ')[1];
+    }
+    // Check for token in x-access-token header
+    else if (req.headers['x-access-token']) {
+        token = req.headers['x-access-token'];
     }
 
     if (!token || token === 'null' || token === 'undefined') {

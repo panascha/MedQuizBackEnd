@@ -20,7 +20,7 @@ const UserSchema = new mongoose.Schema({
         minlength: [6, 'Password must be at least 6 characters'],
         select: false,
         match: [
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{6,}$/,
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/,
             'Password must contain at least one uppercase letter, one lowercase letter and one number'
         ]
     },
@@ -61,6 +61,10 @@ const UserSchema = new mongoose.Schema({
     },
     otpCode: String,
     otpExpire: Date,
+    otpVerified: {
+        type: Boolean,
+        default: false
+    },
     createdAt: {
         type: Date,
         default: Date.now
@@ -82,6 +86,13 @@ UserSchema.pre('save', async function(next) {
 UserSchema.methods.getSignedJwtToken = function() {
     return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
         expiresIn: process.env.JWT_EXPIRE
+    });
+};
+
+// Sign JWT for password reset with 5-minute expiration
+UserSchema.methods.getResetToken = function() {
+    return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
+        expiresIn: '5m' // 5 minutes
     });
 };
 

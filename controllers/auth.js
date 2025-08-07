@@ -235,7 +235,7 @@ exports.updateUser = async (req, res) => {
  */
 exports.getAllUser = async (req, res) => {
     try {
-        const users = await User.find({}, 'name email year role');
+        const users = await User.find({});
         res.status(200).json({
             success: true,
             data: users

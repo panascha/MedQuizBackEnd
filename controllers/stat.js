@@ -81,6 +81,7 @@ exports.getStatUser = async (req, res) => {
                 { $group: { _id: "$user", keywordCount: { $sum: 1 } } }
             ]),
             Report.aggregate([
+                { $match: { status: 'approved' } },
                 { $group: { _id: "$User", reportCount: { $sum: 1 } } }
             ])
         ]);

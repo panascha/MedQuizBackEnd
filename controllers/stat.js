@@ -73,15 +73,15 @@ exports.getStatUser = async (req, res) => {
     try {
         const [quizStats, keywordStats, reportStats] = await Promise.all([
             Quiz.aggregate([
-                { $match: { status: 'approved' } },
+                { $match: { status: { $in: ['approved', 'rejected'] } } },
                 { $group: { _id: "$user", quizCount: { $sum: 1 } } }
             ]),
             Keyword.aggregate([
-                { $match: { status: 'approved' } },
+                { $match: { status: { $in: ['approved', 'rejected'] } } },
                 { $group: { _id: "$user", keywordCount: { $sum: 1 } } }
             ]),
             Report.aggregate([
-                { $match: { status: 'approved' } },
+                { $match: { status: { $in: ['approved', 'rejected'] } } },
                 { $group: { _id: "$User", reportCount: { $sum: 1 } } }
             ])
         ]);
@@ -134,8 +134,8 @@ exports.getStatByUserIdAndSubject = async (req, res) => {
             return res.status(400).json({ success: false, message: 'userId is required in params' });
         }
 
-        const quizFilter = { user: userId, status: 'approved' };
-        const keywordFilter = { user: userId, status: 'approved' };
+    const quizFilter = { user: userId, status: { $in: ['approved', 'rejected'] } };
+    const keywordFilter = { user: userId, status: { $in: ['approved', 'rejected'] } };
         
         if (subjectId) {
             quizFilter.subject = subjectId;
@@ -150,13 +150,13 @@ exports.getStatByUserIdAndSubject = async (req, res) => {
             
             if (subjectId) {
                 [quizIds, keywordIds] = await Promise.all([
-                    Quiz.find({ subject: subjectId, status: 'approved' }, '_id'),
-                    Keyword.find({ subject: subjectId, status: 'approved' }, '_id')
+                    Quiz.find({ subject: subjectId, status: { $in: ['approved', 'rejected'] } }, '_id'),
+                    Keyword.find({ subject: subjectId, status: { $in: ['approved', 'rejected'] } }, '_id')
                 ]);
             } else {
                 [quizIds, keywordIds] = await Promise.all([
-                    Quiz.find({ user: userId, status: 'approved' }, '_id'),
-                    Keyword.find({ user: userId, status: 'approved' }, '_id')
+                    Quiz.find({ user: userId, status: { $in: ['approved', 'rejected'] } }, '_id'),
+                    Keyword.find({ user: userId, status: { $in: ['approved', 'rejected'] } }, '_id')
                 ]);
             }
             
@@ -167,7 +167,7 @@ exports.getStatByUserIdAndSubject = async (req, res) => {
                 return 0;
             }
             
-            const reportQuery = { User: userId };
+            const reportQuery = { User: userId, status: { $in: ['approved', 'rejected'] } };
             const orConditions = [];
             
             if (quizIdList.length > 0) {

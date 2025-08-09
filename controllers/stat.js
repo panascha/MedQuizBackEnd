@@ -73,9 +73,11 @@ exports.getStatUser = async (req, res) => {
     try {
         const [quizStats, keywordStats, reportStats] = await Promise.all([
             Quiz.aggregate([
+                { $match: { status: 'approved' } },
                 { $group: { _id: "$user", quizCount: { $sum: 1 } } }
             ]),
             Keyword.aggregate([
+                { $match: { status: 'approved' } },
                 { $group: { _id: "$user", keywordCount: { $sum: 1 } } }
             ]),
             Report.aggregate([
@@ -131,8 +133,8 @@ exports.getStatByUserIdAndSubject = async (req, res) => {
             return res.status(400).json({ success: false, message: 'userId is required in params' });
         }
 
-        const quizFilter = { user: userId };
-        const keywordFilter = { user: userId };
+        const quizFilter = { user: userId, status: 'approved' };
+        const keywordFilter = { user: userId, status: 'approved' };
         
         if (subjectId) {
             quizFilter.subject = subjectId;
@@ -147,13 +149,13 @@ exports.getStatByUserIdAndSubject = async (req, res) => {
             
             if (subjectId) {
                 [quizIds, keywordIds] = await Promise.all([
-                    Quiz.find({ subject: subjectId }, '_id'),
-                    Keyword.find({ subject: subjectId }, '_id')
+                    Quiz.find({ subject: subjectId, status: 'approved' }, '_id'),
+                    Keyword.find({ subject: subjectId, status: 'approved' }, '_id')
                 ]);
             } else {
                 [quizIds, keywordIds] = await Promise.all([
-                    Quiz.find({ user: userId }, '_id'),
-                    Keyword.find({ user: userId }, '_id')
+                    Quiz.find({ user: userId, status: 'approved' }, '_id'),
+                    Keyword.find({ user: userId, status: 'approved' }, '_id')
                 ]);
             }
             

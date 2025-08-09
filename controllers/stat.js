@@ -103,7 +103,7 @@ exports.getStatUser = async (req, res) => {
         }));
 
         const userIds = userStats.map(u => u.user);
-        const users = await User.find({ _id: { $in: userIds } }, 'name email role');
+        const users = await User.find({ _id: { $in: userIds } });
         const userInfoMap = new Map(users.map(u => [u._id.toString(), u]));
         const populatedStats = userStats.map(u => ({
             ...u,
@@ -119,62 +119,6 @@ exports.getStatUser = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(400).json({ success: false, message: 'Error fetching user statistics' });
-    }
-}
-
-exports.getStatAllUser = async (req, res) => {
-    try {
-        const users = await User.find({}, 'name email role year createdAt');
-        
-        const [quizStats, keywordStats, reportStats] = await Promise.all([
-            Quiz.aggregate([
-                { $group: { _id: "$user", quizCount: { $sum: 1 } } }
-            ]),
-            Keyword.aggregate([
-                { $group: { _id: "$user", keywordCount: { $sum: 1 } } }
-            ]),
-            Report.aggregate([
-                { $group: { _id: "$User", reportCount: { $sum: 1 } } }
-            ])
-        ]);
-
-        const quizMap = new Map(quizStats.map(q => [q._id?.toString(), q.quizCount]));
-        const keywordMap = new Map(keywordStats.map(k => [k._id?.toString(), k.keywordCount]));
-        const reportMap = new Map(reportStats.map(r => [r._id?.toString(), r.reportCount]));
-
-        const userStatsWithInfo = users.map(user => {
-            const userId = user._id.toString();
-            const quizCount = quizMap.get(userId) || 0;
-            const keywordCount = keywordMap.get(userId) || 0;
-            const reportCount = reportMap.get(userId) || 0;
-            const total = quizCount + keywordCount + reportCount;
-
-            return {
-                user: {
-                    _id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    year: user.year,
-                    createdAt: user.createdAt
-                },
-                quizCount,
-                keywordCount,
-                reportCount,
-                total
-            };
-        });
-
-        userStatsWithInfo.sort((a, b) => b.total - a.total);
-
-        res.status(200).json({
-            success: true,
-            count: userStatsWithInfo.length,
-            data: userStatsWithInfo
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(400).json({ success: false, message: 'Error fetching all user statistics' });
     }
 }
 
@@ -263,7 +207,8 @@ exports.getStatByUserIdAndSubject = async (req, res) => {
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    year: user.year
+                    year: user.year,
+                    status: user.status
                 },
                 subjectId: subjectId || null,
                 quizCount,

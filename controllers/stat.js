@@ -122,45 +122,150 @@ exports.getStatUser = async (req, res) => {
     }
 }
 
+exports.getStatAllUser = async (req, res) => {
+    try {
+        const users = await User.find({}, 'name email role year createdAt');
+        
+        const [quizStats, keywordStats, reportStats] = await Promise.all([
+            Quiz.aggregate([
+                { $group: { _id: "$user", quizCount: { $sum: 1 } } }
+            ]),
+            Keyword.aggregate([
+                { $group: { _id: "$user", keywordCount: { $sum: 1 } } }
+            ]),
+            Report.aggregate([
+                { $group: { _id: "$User", reportCount: { $sum: 1 } } }
+            ])
+        ]);
+
+        const quizMap = new Map(quizStats.map(q => [q._id?.toString(), q.quizCount]));
+        const keywordMap = new Map(keywordStats.map(k => [k._id?.toString(), k.keywordCount]));
+        const reportMap = new Map(reportStats.map(r => [r._id?.toString(), r.reportCount]));
+
+        const userStatsWithInfo = users.map(user => {
+            const userId = user._id.toString();
+            const quizCount = quizMap.get(userId) || 0;
+            const keywordCount = keywordMap.get(userId) || 0;
+            const reportCount = reportMap.get(userId) || 0;
+            const total = quizCount + keywordCount + reportCount;
+
+            return {
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    year: user.year,
+                    createdAt: user.createdAt
+                },
+                quizCount,
+                keywordCount,
+                reportCount,
+                total
+            };
+        });
+
+        userStatsWithInfo.sort((a, b) => b.total - a.total);
+
+        res.status(200).json({
+            success: true,
+            count: userStatsWithInfo.length,
+            data: userStatsWithInfo
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(400).json({ success: false, message: 'Error fetching all user statistics' });
+    }
+}
+
 exports.getStatByUserIdAndSubject = async (req, res) => {
     try {
         const userId = req.params.userId;
-        const subjectId = req.params.subjectId;
-        if (!userId || !subjectId) {
-            return res.status(400).json({ success: false, message: 'userId and subjectId are required in params' });
+        const subjectId = req.params.subjectId; 
+        
+        if (!userId) {
+            return res.status(400).json({ success: false, message: 'userId is required in params' });
         }
-        const quizCountPromise = Quiz.countDocuments({ user: userId, subject: subjectId });
-        const keywordCountPromise = Keyword.countDocuments({ user: userId, subject: subjectId });
+
+        const quizFilter = { user: userId };
+        const keywordFilter = { user: userId };
+        
+        if (subjectId) {
+            quizFilter.subject = subjectId;
+            keywordFilter.subject = subjectId;
+        }
+
+        const quizCountPromise = Quiz.countDocuments(quizFilter);
+        const keywordCountPromise = Keyword.countDocuments(keywordFilter);
+        
         const reportCountPromise = (async () => {
-            const [quizIds, keywordIds] = await Promise.all([
-                Quiz.find({ subject: subjectId }, '_id'),
-                Keyword.find({ subject: subjectId }, '_id')
-            ]);
+            let quizIds, keywordIds;
+            
+            if (subjectId) {
+                [quizIds, keywordIds] = await Promise.all([
+                    Quiz.find({ subject: subjectId }, '_id'),
+                    Keyword.find({ subject: subjectId }, '_id')
+                ]);
+            } else {
+                [quizIds, keywordIds] = await Promise.all([
+                    Quiz.find({ user: userId }, '_id'),
+                    Keyword.find({ user: userId }, '_id')
+                ]);
+            }
+            
             const quizIdList = quizIds.map(q => q._id);
             const keywordIdList = keywordIds.map(k => k._id);
-            return Report.countDocuments({
-                User: userId,
-                $or: [
-                    { originalQuiz: { $in: quizIdList } },
-                    { originalKeyword: { $in: keywordIdList } }
-                ]
-            });
+            
+            if (quizIdList.length === 0 && keywordIdList.length === 0) {
+                return 0;
+            }
+            
+            const reportQuery = { User: userId };
+            const orConditions = [];
+            
+            if (quizIdList.length > 0) {
+                orConditions.push({ originalQuiz: { $in: quizIdList } });
+                orConditions.push({ suggestedChanges: { $in: quizIdList } });
+            }
+            
+            if (keywordIdList.length > 0) {
+                orConditions.push({ originalKeyword: { $in: keywordIdList } });
+                orConditions.push({ suggestedChangesKeyword: { $in: keywordIdList } });
+            }
+            
+            if (orConditions.length > 0) {
+                reportQuery.$or = orConditions;
+            }
+            
+            return Report.countDocuments(reportQuery);
         })();
-        const userPromise = User.findById(userId, 'name email role');
+
+        const userPromise = User.findById(userId);
+
         const [quizCount, keywordCount, reportCount, user] = await Promise.all([
             quizCountPromise,
             keywordCountPromise,
             reportCountPromise,
             userPromise
         ]);
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
+
         const total = quizCount + keywordCount + reportCount;
+
         res.status(200).json({
             success: true,
             data: {
-                user,
+                user: {
+                    _id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    year: user.year
+                },
+                subjectId: subjectId || null,
                 quizCount,
                 keywordCount,
                 reportCount,

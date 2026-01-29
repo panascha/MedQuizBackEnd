@@ -143,7 +143,7 @@ exports.approvedQuiz = async (req, res) => {
       const approvals = await Approved.countDocuments({ quiz: quizID, type: 'quiz', Approved: true });
       const denials = await Approved.countDocuments({ quiz: quizID, type: 'quiz', Approved: false });
   
-      if (approvals >= 2) {
+      if (approvals >= 1) {
         const updatedQuiz = await Quiz.findByIdAndUpdate(quizID, { status: "approved" }, { new: true });
         await Approved.deleteMany({ quiz: quizID, type: 'quiz' });
         return res.status(200).json({
@@ -235,7 +235,7 @@ exports.approvedKeyword = async (req, res) => {
       const approvals = await Approved.countDocuments({ keyword: keywordID, type: 'keyword', Approved: true });
       const denials = await Approved.countDocuments({ keyword: keywordID, type: 'keyword', Approved: false });
   
-      if (approvals >= 2) {
+      if (approvals >= 1) {
         const updatedKeyword = await Keyword.findByIdAndUpdate(keywordID, { status: "approved" }, { new: true });
         await Approved.deleteMany({ keyword: keywordID, type: 'keyword' });
         return res.status(200).json({
@@ -351,7 +351,7 @@ exports.approvedReport = async (req, res) => {
       const approvals = await Approved.countDocuments({ report: reportID, type: 'report', Approved: true });
       const denials = await Approved.countDocuments({ report: reportID, type: 'report', Approved: false });
   
-      if (approvals >= 2) {
+      if (approvals >= 1) {
         if (report.type === 'quiz') {
           await Quiz.findByIdAndUpdate(
             report.suggestedChanges._id,
@@ -375,7 +375,7 @@ exports.approvedReport = async (req, res) => {
         await Approved.deleteMany({ report: reportID, type: 'report' });
         return res.status(200).json({
           success: true,
-          message: "Report approved by 2 admins",
+          message: "Report approved by 1 admin",
           data: updatedReport
         });
       }

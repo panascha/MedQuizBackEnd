@@ -8,18 +8,23 @@ const { uploadImage, getImage, deleteImage } = require('../controllers/image');
 router.post('/upload',
     protect,
     (req, res, next) => {
-        uploadMemory.single('image')(req, res, function (err) {
-            if (err && err.code === 'LIMIT_FILE_SIZE') {
-                // If too large for memory, try GridFS
-                return uploadGridFS.single('image')(req, res, function (err2) {
-                    if (err2) return res.status(400).json({ success: false, message: err2.message });
-                    next();
-                });
-            } else if (err) {
-                return res.status(400).json({ success: false, message: err.message });
-            }
-            next();
-        });
+		const contentLength = req.headers['content-length']; // Size in bytes
+		const fileSize = parseInt(contentLength, 10);
+		const maxAllowedSize = 1 * 1024 * 1024;
+
+		console.log(`Received file size: ${req.headers['content-length']}, ${fileSize} bytes, ${maxAllowedSize} max`);
+
+		if (fileSize > maxAllowedSize) {
+			uploadGridFS.single('image')(req, res, function (err) {
+				if (err) return res.status(400).json({ success: false, message: err.message });
+				next();
+			});
+		} else {
+			uploadMemory.single('image')(req, res, function (err) {
+			if (err) return res.status(400).json({ success: false, message: err.message });
+			next();
+		});
+		}
     },
     hybridUploadHandler,
     uploadImage

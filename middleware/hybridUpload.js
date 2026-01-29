@@ -3,6 +3,7 @@ const { GridFsStorage } = require('multer-gridfs-storage');
 const mongoose = require('mongoose');
 const path = require('path');
 
+
 const memoryStorage = multer.memoryStorage();
 
 const gridFsStorage = new GridFsStorage({
@@ -21,6 +22,9 @@ const gridFsStorage = new GridFsStorage({
         };
     }
 });
+gridFsStorage.on('connection',(db) => {
+	console.log("FS connected!!!");
+});
 
 const uploadMemory = multer({
     storage: memoryStorage,
@@ -36,7 +40,7 @@ const uploadMemory = multer({
 
 const uploadGridFS = multer({
     storage: gridFsStorage,
-    limits: { fileSize: 50 * 1024 * 1024, files: 1 }, // Increased to 50MB
+    limits: { fileSize: 50 * 1024 * 1024, files: 1 },
     fileFilter: (req, file, cb) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         if (!allowedTypes.includes(file.mimetype)) {
@@ -47,6 +51,7 @@ const uploadGridFS = multer({
 });
 
 const hybridUploadHandler = async (req, res, next) => {
+    console.log(req.file);
     if (req.file && req.file.buffer && req.file.size <= 1 * 1024 * 1024) {
         req.hybridImage = {
             type: 'base64',
@@ -70,5 +75,6 @@ const hybridUploadHandler = async (req, res, next) => {
     }
     return res.status(400).json({ success: false, message: 'No file uploaded or file too large.' });
 };
+
 
 module.exports = { uploadMemory, uploadGridFS, hybridUploadHandler }; 

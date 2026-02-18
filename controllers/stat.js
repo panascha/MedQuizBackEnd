@@ -134,8 +134,20 @@ exports.getStatByUserIdAndSubject = async (req, res) => {
             return res.status(400).json({ success: false, message: 'userId is required in params' });
         }
 
-    const quizFilter = { user: userId, status: { $in: ['approved', 'rejected'] } };
-    const keywordFilter = { user: userId, status: { $in: ['approved', 'rejected'] } };
+        const subjectKeywords = await Keyword.find({subject: subjectId,isGlobal: { $ne: true },status: 'approved'});
+        const approvedQuizzes = await Quiz.find({subject: subjectId,status: 'approved'}, 'correctAnswer');
+        const usedAnswers = new Set();
+        approvedQuizzes.forEach(q => {q.correctAnswer.forEach(ans => usedAnswers.add(ans));});
+        let allKeywordsUsed = false;
+        if (subjectKeywords.length > 0) {
+            allKeywordsUsed = subjectKeywords.every(group => group.keywords.some(kw => usedAnswers.has(kw)) );
+        } else {
+            allKeywordsUsed = true;
+        }
+
+
+        const quizFilter = { user: userId, status: { $in: ['approved', 'rejected'] } };
+        const keywordFilter = { user: userId, status: { $in: ['approved', 'rejected'] } };
         
         if (subjectId) {
             quizFilter.subject = subjectId;
@@ -214,10 +226,11 @@ exports.getStatByUserIdAndSubject = async (req, res) => {
                     status: user.status
                 },
                 subjectId: subjectId || null,
+                allKeywordsUsed,
                 quizCount,
                 keywordCount,
                 reportCount,
-                total
+                total,
             }
         });
     } catch (err) {

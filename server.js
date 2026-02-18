@@ -29,7 +29,9 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(mongoSanitize());
-app.use(helmet());
+app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
 app.use(xss());
 
 //create router

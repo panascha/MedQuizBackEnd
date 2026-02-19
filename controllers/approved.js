@@ -298,7 +298,7 @@ exports.approvedReport = async (req, res) => {
       if (report.status !== 'pending') {
         return res.status(400).json({ success: false, message: "This report has already been processed" });
       }
-      if (role === 'S-admin') {
+      if (role === 'S-admin' || role === 'admin') {
         if (report.type === 'quiz') {
           if (isApproved) {
             await Quiz.findByIdAndUpdate(

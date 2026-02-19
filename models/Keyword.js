@@ -27,7 +27,7 @@ const KeywordSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ["pending", "approved", "rejected", "reported"],
-        default: "pending"
+        default: "approved"
     },
     isGlobal: {
         type: Boolean,

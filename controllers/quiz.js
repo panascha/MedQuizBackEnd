@@ -90,11 +90,14 @@ exports.createQuiz = async (req, res, next) => {
         // Set the user ID in the request body
         req.body.user = userId;
 
-        if(req.user.role !== 'S-admin'){
-            req.body.status = "pending";
-        } else {
-            req.body.status = "approved";
-        }
+        // ให้ทุกคนที่สร้าง quiz ใหม่จะถูกตั้งสถานะเป็น "approved" โดยอัตโนมัติ
+        req.body.status = "approved";
+
+        // if(req.user.role !== 'S-admin'){
+        //     req.body.status = "pending";
+        // } else {
+        //     req.body.status = "approved";
+        // }
 
         // Validate subject and category
         const subject = await Subject.findById(req.body.subject);

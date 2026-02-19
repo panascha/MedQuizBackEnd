@@ -78,11 +78,14 @@ exports.createKeyword = async (req, res, next) => {
         }
         // Set the user ID in the request body
         req.body.user = userId;
-        if(req.user.role !== 'S-admin'){
-            req.body.status = "pending";
-        } else {
-            req.body.status = "approved";
-        }
+
+        // ให้ทุกคนที่สร้าง keyword ใหม่จะถูกตั้งสถานะเป็น "approved" โดยอัตโนมัติ
+        req.body.status = "approved";
+        // if(req.user.role !== 'S-admin'){
+        //     req.body.status = "pending";
+        // } else {
+        //     req.body.status = "approved";
+        // }
         const keyword = await Keyword.create(req.body);
         res.status(201).json({ success: true, data: keyword });
     } catch (error) {

@@ -37,7 +37,7 @@ const QuizSchema = new mongoose.Schema({
             values: ["pending", "approved", "rejected", "reported"],
             message: '{VALUE} is not a valid status'
         },
-        default: "pending"
+        default: "approved"
     },
     choice: {
         type: [String],
